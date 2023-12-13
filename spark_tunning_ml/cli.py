@@ -8,7 +8,7 @@ from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.spark_ui_wrapper import SparkUIWrapper
-
+from spark_tunning_ml.audit import audit
 
 def process_executors(sparkui, path_executors, id, attemptid):
     """
@@ -260,6 +260,10 @@ def process_application(id, attemptid, sparkui):
     """
     logger.info(f'Processing application {id}')
 
+    if audit.query_app_id(id):
+        logger.info(f'Application {id} already processed. Skipping')
+        return
+
     path_root = f'{config.get("spark_ui_path_root")}/{id}'
 
     paths = [
@@ -296,6 +300,8 @@ def process_application(id, attemptid, sparkui):
 
         process_environment(sparkui, paths[5], id, attemptid)
 
+    audit.add_app_id(id, 1)
+
 
 def main():
     """
@@ -314,7 +320,7 @@ def main():
 
     # Initialize SparkUIWrapper with the base URL
     sparkui = SparkUIWrapper(args.sparkui_api_url)
-
+    
     # Get the version of Spark API
     version = sparkui.get_version().get('spark', 'unknown')
 

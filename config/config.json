@@ -53,7 +53,7 @@
         "2.4.7.7.1.7.2042-1"
     ],
     "internal_spark_ui_max_concurrency": 1,
-    "internal_spark_ui_apps_limit": 10000,
+    "internal_spark_ui_apps_limit": 10,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
