@@ -339,11 +339,11 @@ def process_application(id, attemptid, sparkui):
         # Process stages without api rest
         process_tasks_stage(sparkui, raw_stages, paths[3], id, attemptid)
 
-        # process_executors(sparkui, paths[0], id, attemptid)
+        process_executors(sparkui, paths[0], id, attemptid)
 
-        # process_jobs(sparkui, paths[4], id, attemptid)
+        process_jobs(sparkui, paths[4], id, attemptid)
 
-        # process_environment(sparkui, paths[5], id, attemptid)
+        process_environment(sparkui, paths[5], id, attemptid)
 
 
 def main():

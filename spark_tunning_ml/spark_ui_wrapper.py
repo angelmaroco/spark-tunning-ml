@@ -95,15 +95,12 @@ class SparkUIWrapper:
         """
 
         ids = []
-        attemptids = []
 
         for app in applications:
-            if len(app['attempts']) > 1:
-                for attempt in app['attempts']:
-                    attemptids.append(int(attempt.get('attemptId', 0)))
-                ids.append({app['id']: max(attemptids)})
-            else:
-                ids.append({app['id']: 0})
+            attemptids = []
+            for attempt in app['attempts']:
+                attemptids.append(int(attempt.get('attemptId', 0)))
+            ids.append({app['id']: max(attemptids)})
         return ids
 
     def get_tasks_from_stages_normalized(self, raw_stages):

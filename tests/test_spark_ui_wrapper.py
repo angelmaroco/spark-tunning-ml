@@ -122,8 +122,7 @@ def test_failed_get_applications(mock_get, spark_ui_wrapper):
                             'appSparkVersion': '2.4.1',
                             'startTimeEpoch': 1701700154422,
                             'endTimeEpoch': -1,
-                            'lastUpdatedEpoch': 1701700154422,
-                            'attemptId': '1',  # Optional field
+                            'lastUpdatedEpoch': 1701700154422
                         },
                     ],
                 },
@@ -167,6 +166,7 @@ def test_get_ids_from_applications_case1(applications, expected_ids, spark_ui_wr
     ids = spark_ui_wrapper.get_ids_from_applications(
         applications
     )
+    print(ids, expected_ids)
     assert ids == expected_ids
 
 
@@ -227,7 +227,7 @@ def test_get_ids_from_applications_case1(applications, expected_ids, spark_ui_wr
                     ],
                 },
             ],
-            [{'app-20231204142916-0004': 0}, {'app-20231204142916-0005': 2}],
+            [{'app-20231204142916-0004': 1}, {'app-20231204142916-0005': 2}],
         ),
     ],
 )
@@ -309,7 +309,7 @@ def test_get_ids_from_applications_case2(applications, expected_ids, spark_ui_wr
                     ],
                 },
             ],
-            [{'app-20231204142916-0004': 0}, {'app-20231204142916-0005': 3}],
+            [{'app-20231204142916-0004': 1}, {'app-20231204142916-0005': 3}],
         ),
     ],
 )
@@ -325,7 +325,7 @@ def test_get_ids_from_applications_case3(applications, expected_ids, spark_ui_wr
         (
             [
                 {
-                    'id': 'app-20231204142916-0004',
+                    'id': 'app-20231204142916-00041',
                     'name': 'Python Spark SQL data source example',
                     'attempts': [
                         {
@@ -344,7 +344,7 @@ def test_get_ids_from_applications_case3(applications, expected_ids, spark_ui_wr
                     ],
                 },
                 {
-                    'id': 'app-20231204142916-0005',
+                    'id': 'app-20231204142916-00051',
                     'name': 'Python Spark SQL data source example',
                     'attempts': [
                         {
@@ -357,19 +357,20 @@ def test_get_ids_from_applications_case3(applications, expected_ids, spark_ui_wr
                             'appSparkVersion': '2.4.1',
                             'startTimeEpoch': 1701700200000,
                             'endTimeEpoch': -1,
-                            'lastUpdatedEpoch': 1701700200000,
+                            'lastUpdatedEpoch': 1701700200000
                         }
                     ],
                 },
             ],
-            [{'app-20231204142916-0004': 0}, {'app-20231204142916-0005': 0}],
+            [{'app-20231204142916-00041': 1}, {'app-20231204142916-00051': 0}],
         ),
     ],
 )
-def test_get_ids_from_applications_case4(applications, expected_ids, spark_ui_wrapper):
+def test_get_ids_from_applications_case5(applications, expected_ids, spark_ui_wrapper):
     ids = spark_ui_wrapper.get_ids_from_applications(
         applications
     )
+    print(ids, expected_ids)
     assert ids == expected_ids
 
 def test_get_id_from_stage_attempts(spark_ui_wrapper):
