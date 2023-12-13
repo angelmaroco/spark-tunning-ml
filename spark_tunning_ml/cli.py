@@ -33,11 +33,6 @@ def process_executors(sparkui, path_executors, id, attemptid):
 
     if data.check_empty_list(executors):
         data.list_to_json(executors, f'{path_executors}/raw.json')
-        data.json_to_parquet(
-            executors,
-            f'{path_executors}/data.parquet',
-            add_column_value={'application_id': id},
-        )
         return True
     else:
         logger.info('No executors found.')
@@ -66,11 +61,6 @@ def process_stages(sparkui, path_stages, id, attemptid):
 
     if data.check_empty_list(stages):
         data.list_to_json(stages, f'{path_stages}/raw.json')
-        data.json_to_parquet(
-            data_list=stages,
-            parquet_file=f'{path_stages}/data.parquet',
-            add_column_value={'application_id': id},
-        )
         return stages
     else:
         logger.info('No stages found.')
@@ -108,15 +98,6 @@ def process_stage_task_detail(sparkui, path_stage_tasks_detail, id, attemptid, s
             response_stage_tasks_detail,
             f'{path_stage_tasks_detail}/raw-{stage}-{stage_attempt_id}-task.json',
         )
-        data.json_to_parquet(
-            data_list=response_stage_tasks_detail,
-            parquet_file=f'{path_stage_tasks_detail}/data-{stage}-{stage_attempt_id}-task.parquet',
-            add_column_value={
-                'application_id': id,
-                'stage_id': stage,
-                'stage_attempt_id': stage_attempt_id,
-            },
-        )
         return True
     else:
         logger.info('No tasks detail found.')
@@ -149,15 +130,6 @@ def process_stage_task_summary(sparkui, path_stage_tasks_summary, id, attemptid,
         data.list_to_json(
             response_stage_tasks_summary,
             f'{path_stage_tasks_summary}/raw-{stage}-{stage_attempt_id}-task.json',
-        )
-        data.json_to_parquet(
-            data_list=response_stage_tasks_summary,
-            parquet_file=f'{path_stage_tasks_summary}/data-{stage}-{stage_attempt_id}-task.parquet',
-            add_column_value={
-                'application_id': id,
-                'stage_id': stage,
-                'stage_attempt_id': stage_attempt_id,
-            },
         )
         return True
     else:
@@ -193,12 +165,6 @@ def process_stage(sparkui, path_stage, stages, id, attemptid):
             stage_response = sparkui.get_stage(id_uri, stage)
 
             data.list_to_json(stage_response, f'{path_stage}/raw-{stage}.json')
-            data.json_to_parquet(
-                data_list=stage_response,
-                parquet_file=f'{path_stage}/stage-{stage}.parquet',
-                add_column_value={'application_id': id},
-                select_columns=config.get('spark_ui_api_stage_columns'),
-            )
             list_raw_stages.append(stage_response[0].get('tasks'))
 
         return list_raw_stages
@@ -229,11 +195,6 @@ def process_jobs(sparkui, path_jobs, id, attemptid):
 
     if data.check_empty_list(jobs):
         data.list_to_json(jobs, f'{path_jobs}/raw.json')
-        data.json_to_parquet(
-            jobs,
-            f'{path_jobs}/data.parquet',
-            add_column_value={'application_id': id},
-        )
         return True
     else:
         logger.info('No jobs found.')
@@ -264,11 +225,6 @@ def process_environment(sparkui, path_environment, id, attemptid):
 
     if data.check_empty_list(spark_properties):
         data.list_to_json(spark_properties, f'{path_environment}/raw.json')
-        data.json_to_parquet(
-            spark_properties,
-            f'{path_environment}/data.parquet',
-            add_column_value={'application_id': id},
-        )
         return True
     else:
         logger.info('No environment found.')
@@ -284,11 +240,6 @@ def process_tasks_stage(sparkui, raw_stages, path_stage_tasks_detail, id, attemp
 
     if data.check_empty_list(data_raw):
         data.list_to_json(data_raw, f'{path_stage_tasks_detail}/raw.json')
-        data.json_to_parquet(
-            data_raw,
-            f'{path_stage_tasks_detail}/data.parquet',
-            add_column_value={'application_id': id},
-        )
         return True
     else:
         logger.info('No tasks found.')
@@ -374,7 +325,7 @@ def main():
     else:
         logger.info(f'Spark API version: {version}')
 
-    apps_limit = config.get("internal_spark_ui_apps_limit")
+    apps_limit = config.get('internal_spark_ui_apps_limit')
     # Get the list of applications from Spark UI
     applications = sparkui.get_applications(apps_limit)
 
@@ -385,7 +336,8 @@ def main():
     debug_mode_enabled = config.get('internal_spark_ui_debug_mode_enabled')
     max_apps = config.get('internal_spark_ui_debug_mode_max_apps')
     test_concurrency = config.get(
-        'internal_spark_ui_debug_mode_test_concurrency')
+        'internal_spark_ui_debug_mode_test_concurrency',
+    )
 
     if debug_mode_enabled:
         logger.info(f'Debug mode enabled. Max applications: {max_apps}')

@@ -3,60 +3,12 @@ from __future__ import annotations
 import glob
 import json
 import os
-from typing import List
-from typing import Optional
-
 import pandas as pd
 
 from spark_tunning_ml.logger import logger
 
 
 class Data:
-    @staticmethod
-    def json_to_parquet(
-        data_list: List[dict],
-        parquet_file: str,
-        add_column_value: Optional[dict] = {},
-        select_columns: Optional[List[str]] = None,
-        filter_by_key_values: Optional[dict] = {},
-    ) -> None:
-        """
-        Convert a list of JSON-like dictionaries to a Parquet file.
-
-        Parameters:
-        - data_list (List[dict]): A list of dictionaries representing JSON-like data.
-        - parquet_file (str): The path to the output Parquet file.
-        - add_column_value (dict, optional): A dictionary representing a new column to be added to the DataFrame.
-        - select_columns (List[str], optional): A list of column names to include in the resulting DataFrame.
-
-        Raises:
-        - ValueError: If there is an error loading the JSON data.
-
-        - Exception: If there is an error during the Parquet conversion.
-        """
-        try:
-            data = pd.json_normalize(data_list)
-
-            if add_column_value:
-                for column, values in add_column_value.items():
-                    data[column] = values
-
-            if filter_by_key_values:
-                for column, value in filter_by_key_values.items():
-                    data = data[data[column] == value]
-
-            if select_columns:
-                filtered_dataframe = data[select_columns]
-            else:
-                filtered_dataframe = data
-        except ValueError as ve:
-            raise ValueError(f'Error loading JSON file: {ve}')
-
-        try:
-            logger.info(f'Conversion successful: {parquet_file}')
-        except Exception as e:
-            raise Exception(f'Error during conversion: {e}')
-
     @staticmethod
     def dict_to_csv(data_dict, csv_file):
         """
