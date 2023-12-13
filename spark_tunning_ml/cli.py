@@ -374,21 +374,18 @@ def main():
     else:
         logger.info(f'Spark API version: {version}')
 
+    apps_limit = config.get("internal_spark_ui_apps_limit")
     # Get the list of applications from Spark UI
-    applications = sparkui.get_applications()
+    applications = sparkui.get_applications(apps_limit)
 
     # Get the application IDs from the applications list
-    applications_ids = sparkui.get_ids_from_applications(
-        applications,
-        config.get('internal_spark_ui_allow_not_complete_apps'),
-    )
+    applications_ids = sparkui.get_ids_from_applications(applications)
 
     # Enable debug mode if configured
     debug_mode_enabled = config.get('internal_spark_ui_debug_mode_enabled')
     max_apps = config.get('internal_spark_ui_debug_mode_max_apps')
     test_concurrency = config.get(
-        'internal_spark_ui_debug_mode_test_concurrency',
-    )
+        'internal_spark_ui_debug_mode_test_concurrency')
 
     if debug_mode_enabled:
         logger.info(f'Debug mode enabled. Max applications: {max_apps}')
@@ -399,7 +396,6 @@ def main():
             applications_ids *= config.get(
                 'internal_spark_ui_debug_mode_test_concurrency_apps',
             )
-            applications_ids.append({'test': '1'})
 
     # Check if the applications list is empty
     if not data.check_empty_list(applications_ids):

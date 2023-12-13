@@ -20,9 +20,12 @@ class SparkUIWrapper:
         self.base_url = base_url
         self.request_wrapper = RequestWrapper(base_url)
 
-    def get_applications(self):
+    def get_applications(self, apps_limit):
         """
         Fetch information about Spark applications.
+
+        Args:
+            apps_limit (int): The maximum number of applications to fetch.
 
         Returns:
             requests.Response: The response object containing the JSON data.
@@ -72,7 +75,7 @@ class SparkUIWrapper:
             },
         }
 
-        endpoint = config.get('spark_ui_api_endpoint_applications')
+        endpoint = config.get('spark_ui_api_endpoint_applications').format(apps_limit=apps_limit)
         applications = self.request_wrapper.request('GET', endpoint)
 
         schema = SchemaValidator(schema)
@@ -80,29 +83,27 @@ class SparkUIWrapper:
 
         return applications
 
-    def get_ids_from_applications(self, applications, filter_completed=False):
+    def get_ids_from_applications(self, applications):
         """
         Get a list of IDs from a list of applications.
 
         Args:
             applications (list): A list of applications.
-            filter_completed (bool, optional): If True,  filter only completed applications. Defaults to False.
 
         Returns:
             list: A list of IDs.
         """
 
         ids = []
+        attemptids = []
 
-        if filter_completed:
-            for app in applications:
+        for app in applications:
+            if len(app['attempts']) > 1:
                 for attempt in app['attempts']:
-                    if attempt.get('completed'):
-                        ids.append({app['id']: app.get('attemptID', 0)})
-                        break
-        else:
-            for app in applications:
-                ids.append({app['id']: app.get('attemptID', 0)})
+                    attemptids.append(attempt.get('attemptID', 0))
+                ids.append({app['id']: max(attemptids)})
+            else:
+                ids.append({app['id']: 0})
 
         return ids
 
