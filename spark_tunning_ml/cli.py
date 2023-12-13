@@ -4,11 +4,12 @@ import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
+from spark_tunning_ml.audit import audit
 from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.spark_ui_wrapper import SparkUIWrapper
-from spark_tunning_ml.audit import audit
+
 
 def process_executors(sparkui, path_executors, id, attemptid):
     """
@@ -65,76 +66,6 @@ def process_stages(sparkui, path_stages, id, attemptid):
     else:
         logger.info('No stages found.')
         return []
-
-
-def process_stage_task_detail(sparkui, path_stage_tasks_detail, id, attemptid, stage, stage_attempt_id):
-    """
-    Process the task detail for a specific stage.
-
-    Args:
-        sparkui (SparkUI): An instance of the SparkUI class.
-        path_stage_tasks_detail (str): The path to the directory where the task detail files will be saved.
-        id (str): The ID of the application.
-        attemptid (int): The attempt ID of the application.
-        stage (int): The ID of the stage.
-        stage_attempt_id (int): The ID of the stage attempt.
-
-    Returns:
-        bool: True if the task detail is successfully processed, False otherwise.
-    """
-    logger.info(
-        f'Processing stage task detail for application {id} and attempt {attemptid}',
-    )
-    id_uri = f'{id}/{attemptid}' if attemptid > 0 else id
-
-    response_stage_tasks_detail = sparkui.get_task_list(
-        id_uri,
-        stage,
-        stage_attempt_id,
-    )
-
-    if data.check_empty_list(response_stage_tasks_detail):
-        data.list_to_json(
-            response_stage_tasks_detail,
-            f'{path_stage_tasks_detail}/raw-{stage}-{stage_attempt_id}-task.json',
-        )
-        return True
-    else:
-        logger.info('No tasks detail found.')
-        return False
-
-
-def process_stage_task_summary(sparkui, path_stage_tasks_summary, id, attemptid, stage, stage_attempt_id):
-    """
-    Process the task summary for a specific stage of a Spark application.
-    Args:
-        sparkui (SparkUI): The Spark UI object.
-        path_stage_tasks_summary (str): The path to save the stage tasks summary.
-        id (str): The application ID.
-        attemptid (int): The attempt ID of the application.
-        stage (int): The stage number.
-        stage_attempt_id (int): The attempt ID of the stage.
-    Returns:
-        bool: True if the task summary processing is successful, False otherwise.
-    """
-    logger.info(
-        f'Processing stage task summary for application {id} and attempt {attemptid}',
-    )
-    id_uri = f'{id}/{attemptid}' if attemptid > 0 else id
-
-    response_stage_tasks_summary = [
-        sparkui.get_task_summary(id_uri, stage, stage_attempt_id),
-    ]
-
-    if data.check_empty_list(response_stage_tasks_summary):
-        data.list_to_json(
-            response_stage_tasks_summary,
-            f'{path_stage_tasks_summary}/raw-{stage}-{stage_attempt_id}-task.json',
-        )
-        return True
-    else:
-        logger.info('No tasks summary found.')
-        return False
 
 
 def process_stage(sparkui, path_stage, stages, id, attemptid):
@@ -300,7 +231,21 @@ def process_application(id, attemptid, sparkui):
 
         process_environment(sparkui, paths[5], id, attemptid)
 
-    audit.add_app_id(id, 1)
+    count_files_executors = data.count_files(paths[0])
+    count_files_stages = data.count_files(paths[1])
+    count_files_tasks = data.count_files(paths[3])
+    count_files_jobs = data.count_files(paths[4])
+    count_files_environment = data.count_files(paths[5])
+
+    audit.add_app_id(
+        id,
+        1,
+        count_files_executors,
+        count_files_stages,
+        count_files_tasks,
+        count_files_jobs,
+        count_files_environment,
+    )
 
 
 def main():
@@ -320,7 +265,7 @@ def main():
 
     # Initialize SparkUIWrapper with the base URL
     sparkui = SparkUIWrapper(args.sparkui_api_url)
-    
+
     # Get the version of Spark API
     version = sparkui.get_version().get('spark', 'unknown')
 
@@ -361,7 +306,9 @@ def main():
 
     # Create a ThreadPoolExecutor object with the maximum concurrency limit specified in the configuration
     # This will allow us to execute multiple tasks concurrently
-    with ThreadPoolExecutor(config.get('internal_spark_ui_max_concurrency')) as executor:
+    with ThreadPoolExecutor(
+        config.get('internal_spark_ui_max_concurrency'),
+    ) as executor:
         for app in applications_ids:
             for id, attempid in app.items():
                 executor.submit(process_application, id, attempid, sparkui)

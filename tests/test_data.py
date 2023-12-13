@@ -16,6 +16,7 @@ JSON_TEST = 'test.json'
 def data_instance():
     return Data()
 
+
 def test_list_to_json_with_valid_data(data_instance):
     # Arrange
     data_list = [1, 2, 3]
@@ -158,3 +159,37 @@ def test_remove_directory(tmpdir, data_instance):
     assert not os.path.exists(test_file)
     assert not os.path.exists(subdirectory)
     assert not os.path.exists(subdirectory_file)
+
+
+@pytest.fixture
+def test_directory(tmp_path):
+    dir_path = tmp_path / 'test_directory'
+    dir_path.mkdir()
+
+    # Create some files and subdirectories
+    file_names = ['file1.txt', 'file2.txt', 'file3.md', 'subdir/file4.txt']
+    for file_name in file_names:
+        file_path = dir_path / file_name
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.touch()
+
+    return str(dir_path)
+
+
+def test_count_files_all_files(test_directory, data_instance):
+    total_files = data_instance.count_files(test_directory)
+    assert total_files == 4  # 4 files were created in the test directory
+
+
+def test_count_files_filtered_by_extension(test_directory, data_instance):
+    total_files_txt = data_instance.count_files(
+        test_directory, extension='txt')
+    assert total_files_txt == 3  # 3 txt files were created in the test directory
+
+    total_files_md = data_instance.count_files(test_directory, extension='md')
+    assert total_files_md == 1  # 1 md file was created in the test directory
+
+
+def test_count_files_nonexistent_extension(test_directory, data_instance):
+    total_files = data_instance.count_files(test_directory, extension='png')
+    assert total_files == 0

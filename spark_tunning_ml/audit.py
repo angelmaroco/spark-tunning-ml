@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import sqlite3
+
 import pandas as pd
+
 
 class Audit:
     def __init__(self, db_name='audit_database.db'):
@@ -19,23 +23,39 @@ class Audit:
         try:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
-
-            cursor.execute('''
+            # audit.add_app_id(id, 1, count_files_executors, count_files_stages, count_files_tasks, count_files_jobs, count_files_environment)
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS audit (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     app_id TEXT NOT NULL,
                     processed INTEGER DEFAULT 0,
+                    count_files_executors INTEGER DEFAULT 0,
+                    count_files_stages INTEGER DEFAULT 0,
+                    count_files_tasks INTEGER DEFAULT 0,
+                    count_files_jobs INTEGER DEFAULT 0,
+                    count_files_environment INTEGER DEFAULT 0,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """,
+            )
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f"Error creating database: {e}")
+            raise Exception(f'Error creating database: {e}')
         finally:
             conn.close()
 
-    def add_app_id(self, app_id, processed=0):
+    def add_app_id(
+        self,
+        app_id,
+        processed,
+        count_files_executors,
+        count_files_stages,
+        count_files_tasks,
+        count_files_jobs,
+        count_files_environment,
+    ):
         """
         Add an app_id to the audit database.
 
@@ -46,11 +66,29 @@ class Audit:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
 
-            cursor.execute('INSERT INTO audit (app_id, processed) VALUES (?, ?)', (app_id,processed))
+            cursor.execute(
+                """INSERT INTO audit (
+                    app_id, processed,
+                    count_files_executors,
+                    count_files_stages,
+                    count_files_tasks,
+                    count_files_jobs,
+                    count_files_environment
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    app_id,
+                    processed,
+                    count_files_executors,
+                    count_files_stages,
+                    count_files_tasks,
+                    count_files_jobs,
+                    count_files_environment,
+                ),
+            )
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f"Error adding app_id: {e}")
+            raise Exception(f'Error adding app_id: {e}')
         finally:
             conn.close()
 
@@ -69,7 +107,7 @@ class Audit:
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f"Error deleting app_id: {e}")
+            raise Exception(f'Error deleting app_id: {e}')
         finally:
             conn.close()
 
@@ -87,12 +125,15 @@ class Audit:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
 
-            cursor.execute('SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = 1', (app_id,))
+            cursor.execute(
+                'SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = 1',
+                (app_id,),
+            )
             count = cursor.fetchone()[0]
 
             return count > 0
         except sqlite3.Error as e:
-            raise Exception(f"Error querying app_id: {e}")
+            raise Exception(f'Error querying app_id: {e}')
         finally:
             conn.close()
 
@@ -109,8 +150,9 @@ class Audit:
             df = pd.read_sql_query(query, conn)
             return df
         except sqlite3.Error as e:
-            raise Exception(f"Error getting audit data: {e}")
+            raise Exception(f'Error getting audit data: {e}')
         finally:
             conn.close()
+
 
 audit = Audit()

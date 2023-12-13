@@ -3,6 +3,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+
 import pandas as pd
 
 from spark_tunning_ml.logger import logger
@@ -269,3 +270,24 @@ class Data:
 
         except PermissionError as e:
             raise PermissionError(f'Permission error: {e}')
+
+    @staticmethod
+    def count_files(directory, extension=None):
+        """
+        Count the total number of files recursively in a directory.
+
+        Parameters:
+        - directory (str): The directory path.
+        - extension (str or None): The file extension to filter by. If None, count all files.
+
+        Returns:
+        - int: The total number of files.
+        """
+        total_files = 0
+
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if extension is None or file.endswith(f'.{extension}'):
+                    total_files += 1
+
+        return total_files

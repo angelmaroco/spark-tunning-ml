@@ -76,7 +76,8 @@ class SparkUIWrapper:
         }
 
         endpoint = config.get('spark_ui_api_endpoint_applications').format(
-            apps_limit=apps_limit)
+            apps_limit=apps_limit,
+        )
         applications = self.request_wrapper.request('GET', endpoint)
 
         schema = SchemaValidator(schema)
