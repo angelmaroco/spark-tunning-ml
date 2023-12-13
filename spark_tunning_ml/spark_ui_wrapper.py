@@ -20,7 +20,7 @@ class SparkUIWrapper:
         self.base_url = base_url
         self.request_wrapper = RequestWrapper(base_url)
 
-    def get_applications(self, apps_limit):
+    def get_applications(self, apps_limit=10000):
         """
         Fetch information about Spark applications.
 
@@ -100,11 +100,10 @@ class SparkUIWrapper:
         for app in applications:
             if len(app['attempts']) > 1:
                 for attempt in app['attempts']:
-                    attemptids.append(attempt.get('attemptID', 0))
+                    attemptids.append(int(attempt.get('attemptId', 0)))
                 ids.append({app['id']: max(attemptids)})
             else:
                 ids.append({app['id']: 0})
-
         return ids
 
     def get_tasks_from_stages_normalized(self, raw_stages):
