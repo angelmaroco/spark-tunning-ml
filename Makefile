@@ -3,7 +3,7 @@ ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exi
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
 
 .PHONY: help
-help:             ## Show the help.
+help:             	## Show the help.
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"
@@ -11,7 +11,7 @@ help:             ## Show the help.
 
 
 .PHONY: show
-show:             ## Show the current environment.
+show:             	## Show the current environment.
 	@echo "Current environment:"
 	@if [ "$(USING_POETRY)" ]; then poetry env info && exit; fi
 	@echo "Running using $(ENV_PREFIX)"
@@ -19,36 +19,36 @@ show:             ## Show the current environment.
 	@$(ENV_PREFIX)python -m site
 
 .PHONY: install
-install:          ## Install the project in dev mode.
+install:          	## Install the project in dev mode.
 	@if [ "$(USING_POETRY)" ]; then poetry install && exit; fi
 	@echo "Don't forget to run 'make virtualenv' if you got errors."
 	$(ENV_PREFIX)pip install -e .[test]
 
 .PHONY: fmt
-fmt:              ## Format code using black & isort.
+fmt:              	## Format code using black & isort.
 	$(ENV_PREFIX)isort spark_tunning_ml/
 	$(ENV_PREFIX)black -l 120 spark_tunning_ml/
 	$(ENV_PREFIX)black -l 120 tests/
 
 .PHONY: lint
-lint:             ## Run pep8, black, mypy linters.
+lint:             	## Run pep8, black, mypy linters.
 	$(ENV_PREFIX)flake8 spark_tunning_ml/
 	$(ENV_PREFIX)black -l 120 spark_tunning_ml/
 	$(ENV_PREFIX)black -l 120 tests/
 	$(ENV_PREFIX)mypy --ignore-missing-imports spark_tunning_ml/
 
 .PHONY: test
-test:        ## Run tests and generate coverage report.
+test:        		## Run tests and generate coverage report.
 	$(ENV_PREFIX)pytest -v --cov-config .coveragerc --cov=spark_tunning_ml -l --tb=short --maxfail=1 tests/
 	$(ENV_PREFIX)coverage xml
 	$(ENV_PREFIX)coverage html
 
 .PHONY: watch
-watch:            ## Run tests on every change.
+watch:            	## Run tests on every change.
 	ls **/**.py | entr $(ENV_PREFIX)pytest -s -vvv -l --tb=long --maxfail=1 tests/
 
 .PHONY: clean
-clean:            ## Clean unused files.
+clean:            	## Clean unused files.
 	@find ./ -name '*.pyc' -exec rm -f {} \;
 	@find ./ -name '__pycache__' -exec rm -rf {} \;
 	@find ./ -name 'Thumbs.db' -exec rm -f {} \;
@@ -64,7 +64,7 @@ clean:            ## Clean unused files.
 	@rm -rf docs/_build
 
 .PHONY: virtualenv
-virtualenv:       ## Create a virtual environment.
+virtualenv:       	## Create a virtual environment.
 	@if [ "$(USING_POETRY)" ]; then poetry install && exit; fi
 	@echo "creating virtualenv ..."
 	@rm -rf .venv
@@ -75,7 +75,7 @@ virtualenv:       ## Create a virtual environment.
 	@echo "!!! Please run 'source .venv/bin/activate' to enable the environment !!!"
 
 .PHONY: release
-release:          ## Create a new tag for release.
+release:          	## Create a new tag for release.
 	@echo "WARNING: This operation will create s version tag and push to github"
 	@read -p "Version? (provide the next x.y.z semver) : " TAG
 	@echo "$${TAG}" > spark_tunning_ml/VERSION
@@ -88,13 +88,13 @@ release:          ## Create a new tag for release.
 	@echo "Github Actions will detect the new tag and release the new version."
 
 .PHONY: docs
-docs:             ## Build the documentation.
+docs:             	## Build the documentation.
 	@echo "building documentation ..."
 	@$(ENV_PREFIX)mkdocs build
 	URL="site/index.html"; xdg-open $$URL || sensible-browser $$URL || x-www-browser $$URL || gnome-open $$URL || open $$URL
 
 .PHONY: switch-to-poetry
-switch-to-poetry: ## Switch to poetry package manager.
+switch-to-poetry: 	## Switch to poetry package manager.
 	@echo "Switching to poetry ..."
 	@if ! poetry --version > /dev/null; then echo 'poetry is required, install from https://python-poetry.org/'; exit 1; fi
 	@rm -rf .venv
@@ -112,8 +112,13 @@ switch-to-poetry: ## Switch to poetry package manager.
 	@echo "Please run 'poetry shell' or 'poetry run spark_tunning_ml'"
 
 .PHONY: init
-init:             ## Initialize the project based on an application template.
+init:             	## Initialize the project based on an application template.
 	@./.github/init.sh
+
+.PHONY: clean_application
+clean_application:	## Clean data applications
+	@rm -rf ./data/applications/*
+	@rm -rf ./logs/*.log
 
 
 # This project has been generated from rochacbruno/python-project-template

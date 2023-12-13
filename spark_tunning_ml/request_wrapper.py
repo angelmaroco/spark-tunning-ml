@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import requests
 
 from spark_tunning_ml.logger import logger
@@ -31,16 +33,16 @@ class RequestWrapper:
         Returns:
             dict: The JSON content of the response.
         """
-        url = f"{self.base_url}{endpoint}"
-        logger.info(f"Making {method} request to {url}.")
+        url = f'{self.base_url}{endpoint}'
+        logger.info(f'Making {method} request to {url}.')
 
-        if method.upper() == "GET":
+        if method.upper() == 'GET':
             response = requests.get(url, params=params)
-        elif method.upper() == "POST":
+        elif method.upper() == 'POST':
             response = requests.post(url, data=data, json=json)
         else:
             raise ValueError(
-                "Unsupported HTTP method. Supported methods: 'GET', 'POST'."
+                "Unsupported HTTP method. Supported methods: 'GET', 'POST'.",
             )
 
         response.raise_for_status()

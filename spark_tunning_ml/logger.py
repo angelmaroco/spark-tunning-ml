@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
-from logging.handlers import RotatingFileHandler
+
 
 class Logger:
-    def __init__(self, log_file="./log/app.log", log_level=logging.INFO):
+    def __init__(self, log_file='/tmp/spark-tunning-ml.log', log_level=logging.INFO):
         self.logger_instance = logging.getLogger(__name__)
         self.logger_instance.setLevel(log_level)
 
@@ -15,7 +17,9 @@ class Logger:
         console_handler.setLevel(log_level)
 
         # Create a formatter and set the format for the handlers
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s',
+        )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
 
@@ -39,4 +43,4 @@ class Logger:
         self.logger_instance.debug(message)
 
 
-logger = Logger("./logs/app.log", logging.INFO)
+logger = Logger('/tmp/spark-tunning-ml.log', logging.INFO)

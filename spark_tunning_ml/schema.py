@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import jsonschema
-from jsonschema.exceptions import (FormatError, SchemaError, UnknownType,
-                                   ValidationError)
+from jsonschema.exceptions import FormatError
+from jsonschema.exceptions import SchemaError
+from jsonschema.exceptions import UnknownType
+from jsonschema.exceptions import ValidationError
 
 
 class SchemaValidator:
@@ -35,7 +39,7 @@ class SchemaValidator:
             FormatError,
             UnknownType,
         ) as e:
-            print(f"Validation failed: {e}")
+            print(f'Validation failed: {e}')
             raise
 
     def iter_errors(self, instance):
