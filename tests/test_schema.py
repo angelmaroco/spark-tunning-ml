@@ -7,12 +7,12 @@ from spark_tunning_ml.schema import SchemaValidator
 
 # Example schema for testing
 example_schema = {
-    "type": "object",
-    "properties": {
-        "name": {"type": "string"},
-        "age": {"type": "integer"},
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'age': {'type': 'integer'},
     },
-    "required": ["name", "age"],
+    'required': ['name', 'age'],
 }
 
 
@@ -23,7 +23,7 @@ def my_schema():
 
 def test_validate_success(my_schema):
     # Example JSON data that conforms to the schema
-    valid_data = {"name": "John Doe", "age": 30}
+    valid_data = {'name': 'John Doe', 'age': 30}
 
     # No exception should be raised
     my_schema.validate(valid_data)
@@ -31,7 +31,7 @@ def test_validate_success(my_schema):
 
 def test_validate_failure(my_schema):
     # Example JSON data that does not conform to the schema
-    invalid_data = {"name": "John Doe"}  # Missing "age" field
+    invalid_data = {'name': 'John Doe'}  # Missing "age" field
 
     # ValidationError should be raised
     with pytest.raises(jsonschema.exceptions.ValidationError):
@@ -40,7 +40,7 @@ def test_validate_failure(my_schema):
 
 def test_iter_errors(my_schema):
     # Example JSON data that does not conform to the schema
-    invalid_data = {"name": "John Doe"}  # Missing "age" field
+    invalid_data = {'name': 'John Doe'}  # Missing "age" field
 
     # Getting an iterator of validation errors
     errors_iterator = my_schema.iter_errors(invalid_data)
@@ -51,7 +51,7 @@ def test_iter_errors(my_schema):
 
 def test_validate_with_schema_error():
     # Example schema with an error
-    invalid_schema = {"type": "objec"}  # Missing 't' in 'object'
+    invalid_schema = {'type': 'objec'}  # Missing 't' in 'object'
 
     # Creating SchemaValidator instance with the invalid schema
     my_schema = SchemaValidator(invalid_schema)
