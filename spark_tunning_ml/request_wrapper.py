@@ -33,12 +33,12 @@ class RequestWrapper:
         Returns:
             dict: The JSON content of the response.
         """
-        url = f'{self.base_url}{endpoint}'
-        logger.info(f'Making {method} request to {url}.')
+        url = f"{self.base_url}{endpoint}"
+        logger.info(f"Making {method} request to {url}.")
 
-        if method.upper() == 'GET':
+        if method.upper() == "GET":
             response = requests.get(url, params=params)
-        elif method.upper() == 'POST':
+        elif method.upper() == "POST":
             response = requests.post(url, data=data, json=json)
         else:
             raise ValueError(

@@ -11,16 +11,16 @@ class Config:
 
     def _load_config(self):
         try:
-            with open(self.file_path, 'r') as file:
+            with open(self.file_path, "r") as file:
                 config_data = json.load(file)
             return config_data
         except FileNotFoundError:
             raise FileNotFoundError(
-                f'Config file not found at path: {self.file_path}',
+                f"Config file not found at path: {self.file_path}",
             )
         except json.JSONDecodeError:
             raise ValueError(
-                f'Invalid JSON format in config file: {self.file_path}',
+                f"Invalid JSON format in config file: {self.file_path}",
             )
 
     def get(self, key):
@@ -49,6 +49,5 @@ class Config:
 
 
 config = Config(
-    os.path.join(os.path.dirname(os.path.dirname(__file__))) +
-    '/config/config.json',
+    os.path.join(os.path.dirname(os.path.dirname(__file__))) + "/config/config.json",
 )

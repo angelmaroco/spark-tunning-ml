@@ -56,5 +56,8 @@
     "internal_spark_ui_debug_mode_enabled": true,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": true,
-    "internal_spark_ui_debug_mode_test_concurrency_apps": 1
+    "internal_spark_ui_debug_mode_test_concurrency_apps": 1,
+
+    "internal_spark_ui_enabled_task_summary": false,
+    "internal_spark_ui_enabled_task_detail": false
 }
