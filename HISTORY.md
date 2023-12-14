@@ -2,12 +2,23 @@ Changelog
 =========
 
 
-0.1.2 (2021-08-14)
-------------------
-- Fix release, README and windows CI. [Bruno Rocha]
-- Release: version 0.1.0. [Bruno Rocha]
+(unreleased)
+------------
+
+Fix
+~~~
+- Attempts ids. [Ángel Maroco]
+
+Other
+~~~~~
+- Chore: added new fields to audit. [Ángel Maroco]
+- Feat: added audit. [Ángel Maroco]
+- Chore: remove parquet export. [Ángel Maroco]
+- Chore: added app limit to applications. [Ángel Maroco]
+- Chore: refactor get applications. [Ángel Maroco]
+- Chore: get tasks without api. [Ángel Maroco]
+- Style: black linter. [Ángel Maroco]
+- Chore: add attemptid to requests. [Ángel Maroco]
+- Chore: initial commit. [Ángel Maroco]
 
 
-0.1.0 (2021-08-14)
-------------------
-- Add release command. [Bruno Rocha]
