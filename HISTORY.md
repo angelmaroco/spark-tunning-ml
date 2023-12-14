@@ -11,6 +11,7 @@ Fix
 
 Other
 ~~~~~
+- Release: version  🚀 [Ángel Maroco]
 - Chore: added new fields to audit. [Ángel Maroco]
 - Feat: added audit. [Ángel Maroco]
 - Chore: remove parquet export. [Ángel Maroco]
