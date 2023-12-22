@@ -121,11 +121,7 @@
     "internal_vector_sufix_aggegation_metrics": ".agg",
     "internal_vector_output_path": "/tmp/spark-ui-vector",
     "internal_milvus_connection": {
-        "host": "127.0.0.1",
-        "port": "19530",
-        "user": "",
-        "password": "",
-        "secure": false
+        "uri": "https://in03-2bac68083184640.api.gcp-us-west1.zillizcloud.com"
     },
     "internal_milvus_load_data": true,
     "internal_milvus_load_collection": true,

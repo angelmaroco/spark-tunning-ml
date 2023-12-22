@@ -4,14 +4,14 @@ from spark_tunning_ml.logger import logger
 
 
 class MilvusWrapper:
-    def __init__(self, host="localhost", port=19530):
-        self.host = host
-        self.port = port
+    def __init__(self, uri, token):
+        self.uri = uri
+        self.token = token
         self.collection = None
 
     def connect(self):
         try:
-            connections.connect(host=self.host, port=self.port)
+            connections.connect(alias='default', uri=self.uri, token=self.token)
         except MilvusException as e:
             logger.error(f"Failed to connect to Milvus: {e}")
 

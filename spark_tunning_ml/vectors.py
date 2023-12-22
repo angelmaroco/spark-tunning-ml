@@ -60,7 +60,9 @@ class Vectors:
         Returns:
             None.
         """
-        self.milvus = MilvusWrapper()
+        self.milvus = MilvusWrapper(
+            uri=config.get("internal_milvus_connection").get("uri"),
+            token=os.environ.get("MILVUS_TOKEN"),)
 
     def build_vector(
         self,
