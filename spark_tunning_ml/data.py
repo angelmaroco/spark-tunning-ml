@@ -3,6 +3,8 @@ from __future__ import annotations
 import glob
 import json
 import os
+import random
+import string
 
 import pandas as pd
 
@@ -29,11 +31,11 @@ class Data:
         """
         # Check if data_dict is a dictionary
         if not isinstance(data_dict, dict):
-            raise TypeError('Input data is not a dictionary.')
+            raise TypeError("Input data is not a dictionary.")
 
         # Check if the dictionary is empty
         if not data_dict:
-            raise ValueError('Input dictionary is empty.')
+            raise ValueError("Input dictionary is empty.")
 
         try:
             # Convert the dictionary to a DataFrame
@@ -41,15 +43,15 @@ class Data:
 
             # Write the DataFrame to a CSV file
             df.to_csv(csv_file, index=False)
-            logger.info(f'Dictionary written to CSV: {csv_file}')
+            logger.info(f"Dictionary written to CSV: {csv_file}")
         except FileNotFoundError as e:
-            raise FileNotFoundError(f'Error during CSV writing: {e}')
+            raise FileNotFoundError(f"Error during CSV writing: {e}")
         except PermissionError as e:
-            raise PermissionError(f'Error during CSV writing: {e}')
+            raise PermissionError(f"Error during CSV writing: {e}")
         except ValueError as e:
-            raise ValueError(f'Error during CSV writing: {e}')
+            raise ValueError(f"Error during CSV writing: {e}")
         except TypeError as e:
-            raise TypeError(f'Error during CSV writing: {e}')
+            raise TypeError(f"Error during CSV writing: {e}")
 
     @staticmethod
     def list_to_json(data_list, json_file):
@@ -70,19 +72,19 @@ class Data:
         """
         # Check if data_list is a list
         if not isinstance(data_list, list):
-            raise TypeError('Input data is not a list.')
+            raise TypeError("Input data is not a list.")
 
         # Check if the list is empty
         if not data_list:
-            raise ValueError('Input list is empty.')
+            raise ValueError("Input list is empty.")
 
         try:
             # Write the list to a JSON file
-            with open(json_file, 'w') as file:
+            with open(json_file, "w") as file:
                 json.dump(data_list, file, indent=2)
-            logger.info(f'List written to JSON: {json_file}')
+            logger.info(f"List written to JSON: {json_file}")
         except FileNotFoundError as e:
-            raise FileNotFoundError(f'Error during JSON writing: {e}')
+            raise FileNotFoundError(f"Error during JSON writing: {e}")
 
     @staticmethod
     def create_folders(folder_paths):
@@ -102,19 +104,19 @@ class Data:
         """
         # Check if folder_paths is a list
         if not isinstance(folder_paths, list):
-            raise TypeError('Input data is not a list.')
+            raise TypeError("Input data is not a list.")
 
         # Check if the list of folder paths is empty
         if not folder_paths:
-            raise ValueError('Input list of folder paths is empty.')
+            raise ValueError("Input list of folder paths is empty.")
 
         try:
             # Create folders
             for folder_path in folder_paths:
                 os.makedirs(folder_path, exist_ok=True)
-                logger.info(f'Folder created: {folder_path}')
+                logger.info(f"Folder created: {folder_path}")
         except OSError as e:
-            raise OSError(f'Error creating folder: {e}')
+            raise OSError(f"Error creating folder: {e}")
 
     @staticmethod
     def read_parquet(parquet_file, show_sample=False):
@@ -132,18 +134,18 @@ class Data:
         - pd.DataFrame: The data read from the Parquet file.
         """
         if not parquet_file:
-            raise ValueError('Parquet file path is empty.')
+            raise ValueError("Parquet file path is empty.")
 
         try:
             # Read Parquet file into a pandas DataFrame
             df = pd.read_parquet(parquet_file)
-            logger.info(f'Parquet file read successfully: {parquet_file}')
+            logger.info(f"Parquet file read successfully: {parquet_file}")
             print(df) if show_sample else None
             return df
         except FileNotFoundError as fnfe:
-            raise FileNotFoundError(f'Parquet file not found: {fnfe}')
+            raise FileNotFoundError(f"Parquet file not found: {fnfe}")
         except Exception as e:
-            raise Exception(f'Error during Parquet reading: {e}')
+            raise Exception(f"Error during Parquet reading: {e}")
 
     @staticmethod
     def compact_parquet_files(input_dir, output_file):
@@ -167,7 +169,7 @@ class Data:
             os.remove(output_file)
 
         # Get a list of all Parquet files in the input directory
-        parquet_files = glob.glob(os.path.join(input_dir, '*.parquet'))
+        parquet_files = glob.glob(os.path.join(input_dir, "*.parquet"))
 
         # Check if there are any Parquet files in the input directory
         if not parquet_files:
@@ -199,12 +201,12 @@ class Data:
         """
         # Check if data_list is a list
         if not isinstance(data_list, list):
-            logger.error(f'Input data is not a list: {data_list}')
+            logger.error(f"Input data is not a list: {data_list}")
             return False
 
         # Check if the list is empty
         if not data_list:
-            logger.error(f'Input list is empty: {data_list}')
+            logger.error(f"Input list is empty: {data_list}")
             return False
 
         return True
@@ -269,7 +271,7 @@ class Data:
             os.rmdir(directory_path)
 
         except PermissionError as e:
-            raise PermissionError(f'Permission error: {e}')
+            raise PermissionError(f"Permission error: {e}")
 
     @staticmethod
     def count_files(directory, extension=None):
@@ -287,7 +289,102 @@ class Data:
 
         for root, dirs, files in os.walk(directory):
             for file in files:
-                if extension is None or file.endswith(f'.{extension}'):
+                if extension is None or file.endswith(f".{extension}"):
                     total_files += 1
 
         return total_files
+
+    @staticmethod
+    def list_files_recursive(directory, extension=None, level=None):
+        """
+        Recursively list files in a directory with an optional extension filter.
+
+        Parameters:
+        - directory (str): The path to the directory to start listing files from.
+        - extension (str, optional): If provided, only files with this extension will be included.
+        - level (int, optional): If provided, limits the recursion depth.
+
+        Returns:
+        - list: A list of file paths.
+
+        Example:
+        ```python
+        files = list_files_recursive('/path/to/directory', extension='txt', level=2)
+        ```
+
+        Note:
+        - This function does not include directories in the result.
+        """
+        file_list = []
+
+        for root, dirs, files in os.walk(directory):
+            current_level = root.count(os.sep)
+            if level is not None and current_level > level:
+                continue
+
+            for file in files:
+                if extension is None or file.endswith(f".{extension}"):
+                    file_list.append(os.path.join(root, file))
+
+        return file_list
+
+    @staticmethod
+    def list_directories_recursive(directory, level=None):
+        """
+        Recursively list directories in a directory with an optional depth limit.
+
+        Parameters:
+        - directory (str): The path to the directory to start listing directories from.
+        - level (int, optional): If provided, limits the recursion depth.
+
+        Returns:
+        - list: A list of directory paths.
+
+        Example:
+        ```python
+        directories = list_directories_recursive('/path/to/directory', level=2)
+        ```
+
+        Note:
+        - This function does not include the root directory in the result.
+        """
+        directory_list = []
+
+        for root, dirs, files in os.walk(directory):
+            current_level = root.count(os.sep)
+            if level is not None and current_level > level:
+                continue
+
+            if current_level > 1:  # Exclude the root directory
+                directory_list.append(os.path.basename(root))
+
+        return directory_list
+
+    @staticmethod
+    def generate_random_directory(base_path, num_directories):
+        """
+        Generate random directories.
+
+        Parameters:
+        - base_path (str): The base path where directories will be created.
+        - num_directories (int): The number of random directories to generate.
+
+        Returns:
+        - List[str]: List of the created directory paths.
+        """
+        created_directories = []
+
+        for _ in range(num_directories):
+            # Generate a random directory name
+            random_name = "".join(random.choices(string.ascii_letters + string.digits, k=8))
+
+            # Create the full path for the new directory
+            new_directory_path = os.path.join(base_path, random_name)
+
+            # Create the directory
+            os.makedirs(new_directory_path)
+
+            # Append the path to the list of created directories
+            created_directories.append(new_directory_path)
+
+        return created_directories

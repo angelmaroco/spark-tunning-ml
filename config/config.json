@@ -1,6 +1,6 @@
 {
     "spark_ui_api_endpoint_version": "/version",
-    "spark_ui_api_endpoint_applications": "/applications?status=running&limit={apps_limit}",
+    "spark_ui_api_endpoint_applications": "/applications?status=completed&limit={apps_limit}",
     "spark_ui_api_endpoint_environment": "/applications/{app_id}/environment",
     "spark_ui_api_endpoint_executors": "/applications/{app_id}/executors",
     "spark_ui_api_endpoint_stages": "/applications/{app_id}/stages?status=complete",
@@ -50,15 +50,130 @@
     "internal_spark_ui_compatible_versions": [
         "2.3.2",
         "2.4.1",
-        "2.4.7.7.1.7.2042-1"
+        "2.4.7.7.1.7.2042-1",
+        "3.3.3",
+        "3.1.2"
     ],
-    "internal_spark_ui_max_concurrency": 1,
-    "internal_spark_ui_apps_limit": 10,
+    "internal_spark_ui_max_concurrency": 40,
+    "internal_spark_ui_apps_limit": 4,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
     "internal_spark_ui_debug_mode_test_concurrency_apps": 1,
-
     "internal_spark_ui_enabled_task_summary": false,
-    "internal_spark_ui_enabled_task_detail": false
+    "internal_spark_ui_enabled_task_detail": false,
+    "internal_vector_stage_columns": [
+        "stageId",
+        "executorDeserializeTime",
+        "executorDeserializeCpuTime",
+        "executorRunTime",
+        "executorCpuTime",
+        "resultSize",
+        "jvmGcTime",
+        "resultSerializationTime",
+        "memoryBytesSpilled",
+        "diskBytesSpilled",
+        "peakExecutionMemory",
+        "inputBytes",
+        "inputRecords",
+        "outputBytes",
+        "outputRecords",
+        "shuffleRemoteBlocksFetched",
+        "shuffleLocalBlocksFetched",
+        "shuffleFetchWaitTime",
+        "shuffleRemoteBytesRead",
+        "shuffleRemoteBytesReadToDisk",
+        "shuffleLocalBytesRead",
+        "shuffleReadBytes",
+        "shuffleReadRecords",
+        "shuffleWriteBytes",
+        "shuffleWriteTime",
+        "shuffleWriteRecords",
+        "name"
+    ],
+    "internal_vector_tasks_columns": [
+        "taskMetrics.executorDeserializeTime",
+        "taskMetrics.executorDeserializeCpuTime",
+        "taskMetrics.executorRunTime",
+        "taskMetrics.executorCpuTime",
+        "taskMetrics.resultSize",
+        "taskMetrics.jvmGcTime",
+        "taskMetrics.resultSerializationTime",
+        "taskMetrics.memoryBytesSpilled",
+        "taskMetrics.diskBytesSpilled",
+        "taskMetrics.peakExecutionMemory",
+        "taskMetrics.shuffleReadMetrics.remoteBlocksFetched",
+        "taskMetrics.shuffleReadMetrics.localBlocksFetched",
+        "taskMetrics.shuffleReadMetrics.fetchWaitTime",
+        "taskMetrics.shuffleReadMetrics.remoteBytesRead",
+        "taskMetrics.shuffleReadMetrics.remoteBytesReadToDisk",
+        "taskMetrics.shuffleReadMetrics.localBytesRead",
+        "taskMetrics.shuffleReadMetrics.recordsRead",
+        "taskMetrics.shuffleWriteMetrics.bytesWritten",
+        "taskMetrics.shuffleWriteMetrics.writeTime",
+        "taskMetrics.shuffleWriteMetrics.recordsWritten"
+    ],
+    "internal_vector_tasks_aggegation_metrics": [
+        "min",
+        "max",
+        "sum"
+    ],
+    "internal_vector_sufix_aggegation_metrics": ".agg",
+    "internal_vector_output_path": "/tmp/spark-ui-vector",
+    "internal_milvus_connection": {
+        "host": "127.0.0.1",
+        "port": "19530",
+        "user": "",
+        "password": "",
+        "secure": false
+    },
+    "internal_milvus_load_data": true,
+    "internal_milvus_load_collection": true,
+    "internal_milvus_collection_spark_metrics": "SparkMetrics",
+    "internal_milvus_fields_spark_metrics": {
+        "pk": {
+            "type": "INT64",
+            "is_primary": true,
+            "auto_id": true
+        },
+        "sparkAppId": {
+            "type": "VARCHAR",
+            "is_primary": false,
+            "max_length": 2000
+        },
+        "sparkAppName": {
+            "type": "VARCHAR",
+            "is_primary": false,
+            "max_length": 2000
+        },
+        "stageId": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "resultSize": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "inputRecords": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "inputBytes": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "text": {
+            "type": "VARCHAR",
+            "is_primary": false,
+            "max_length": 16536
+        },
+        "vector": {
+            "type": "FLOAT_VECTOR",
+            "dim": 384,
+            "description": "vector"
+        }
+    },
+    "internal_milvus_fields_exclude_own_langchain" : ["pk"],
+    "internal_milvus_model_embeddins": "sentence-transformers/all-MiniLM-L6-v2",
+    "internal_milvus_model_llm": "sentence-transformers/all-MiniLM-L6-v2" 
 }

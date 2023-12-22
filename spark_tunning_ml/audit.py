@@ -6,7 +6,7 @@ import pandas as pd
 
 
 class Audit:
-    def __init__(self, db_name='audit_database.db'):
+    def __init__(self, db_name="audit_database.db"):
         """
         Initialize the Audit class.
 
@@ -42,7 +42,7 @@ class Audit:
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f'Error creating database: {e}')
+            raise Exception(f"Error creating database: {e}")
         finally:
             conn.close()
 
@@ -88,7 +88,7 @@ class Audit:
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f'Error adding app_id: {e}')
+            raise Exception(f"Error adding app_id: {e}")
         finally:
             conn.close()
 
@@ -103,11 +103,11 @@ class Audit:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
 
-            cursor.execute('DELETE FROM audit WHERE app_id = ?', (app_id,))
+            cursor.execute("DELETE FROM audit WHERE app_id = ?", (app_id,))
 
             conn.commit()
         except sqlite3.Error as e:
-            raise Exception(f'Error deleting app_id: {e}')
+            raise Exception(f"Error deleting app_id: {e}")
         finally:
             conn.close()
 
@@ -126,14 +126,14 @@ class Audit:
             cursor = conn.cursor()
 
             cursor.execute(
-                'SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = 1',
+                "SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = 1",
                 (app_id,),
             )
             count = cursor.fetchone()[0]
 
             return count > 0
         except sqlite3.Error as e:
-            raise Exception(f'Error querying app_id: {e}')
+            raise Exception(f"Error querying app_id: {e}")
         finally:
             conn.close()
 
@@ -146,11 +146,11 @@ class Audit:
         """
         try:
             conn = sqlite3.connect(self.db_name)
-            query = 'SELECT * FROM audit'
+            query = "SELECT * FROM audit"
             df = pd.read_sql_query(query, conn)
             return df
         except sqlite3.Error as e:
-            raise Exception(f'Error getting audit data: {e}')
+            raise Exception(f"Error getting audit data: {e}")
         finally:
             conn.close()
 

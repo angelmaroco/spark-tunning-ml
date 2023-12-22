@@ -8,8 +8,8 @@ import pytest
 
 from spark_tunning_ml.data import Data
 
-CSV_TEST = 'test.csv'
-JSON_TEST = 'test.json'
+CSV_TEST = "test.csv"
+JSON_TEST = "test.json"
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def test_list_to_json_with_empty_list(data_instance):
 
 def test_list_to_json_with_invalid_data(data_instance):
     # Arrange
-    data_list = 'not a list'
+    data_list = "not a list"
     json_file = JSON_TEST
 
     # Act and Assert
@@ -52,7 +52,7 @@ def test_list_to_json_with_invalid_data(data_instance):
 
 
 def test_create_folders_valid_input(data_instance):
-    folder_paths = ['path1', 'path2', 'path3']
+    folder_paths = ["path1", "path2", "path3"]
     assert data_instance.create_folders(folder_paths) is None
     # Add assertions to check if the folders are created as expected
 
@@ -64,15 +64,15 @@ def test_create_folders_empty_list(data_instance):
 
 
 def test_create_folders_invalid_input(data_instance):
-    folder_paths = 'path'
+    folder_paths = "path"
     with pytest.raises(TypeError):
         data_instance.create_folders(folder_paths)
 
 
 # Test case 2: Test when the input directory does not exist
 def test_compact_parquet_files_with_nonexistent_directory(data_instance):
-    input_directory = '/path/to/nonexistent_directory'
-    output_file = '/tmp/output_file.parquet'
+    input_directory = "/path/to/nonexistent_directory"
+    output_file = "/tmp/output_file.parquet"
 
     # Call the function and assert that it raises a FileNotFoundError
     with pytest.raises(FileNotFoundError):
@@ -82,12 +82,12 @@ def test_compact_parquet_files_with_nonexistent_directory(data_instance):
 # Utility function to create dummy Parquet files in a directory
 def create_dummy_parquet_files(directory):
     # Create some dummy data
-    data = {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']}
+    data = {"col1": [1, 2, 3], "col2": ["a", "b", "c"]}
     df = pd.DataFrame(data)
 
     # Save the data as Parquet files in the directory
     for i in range(3):
-        file_path = os.path.join(directory, f'file_{i}.parquet')
+        file_path = os.path.join(directory, f"file_{i}.parquet")
         df.to_parquet(file_path, index=False)
 
 
@@ -104,20 +104,20 @@ def is_valid_parquet_file(file_path):
 def sample_files(tmp_path):
     # Create sample Parquet files in a temporary directory
     file_paths = [
-        tmp_path / 'data_1.parquet',
-        tmp_path / 'data_2.parquet',
-        tmp_path / 'other_file.txt',  # This file should not be deleted
+        tmp_path / "data_1.parquet",
+        tmp_path / "data_2.parquet",
+        tmp_path / "other_file.txt",  # This file should not be deleted
     ]
     for file_path in file_paths:
-        with open(file_path, 'w') as f:
-            f.write('Sample data')
+        with open(file_path, "w") as f:
+            f.write("Sample data")
     return tmp_path
 
 
 def test_delete_files(sample_files, data_instance):
     # Test deleting Parquet files with the filter 'data_*'
     directory = sample_files
-    file_filter = 'data_*'
+    file_filter = "data_*"
 
     # Call the function
     deleted_count = data_instance.delete_files(directory, file_filter)
@@ -127,7 +127,7 @@ def test_delete_files(sample_files, data_instance):
 
     # Check if only files were deleted
     remaining_files = os.listdir(directory)
-    assert all(file.endswith('.parquet') is False for file in remaining_files)
+    assert all(file.endswith(".parquet") is False for file in remaining_files)
 
 
 def test_remove_directory(tmpdir, data_instance):
@@ -141,15 +141,15 @@ def test_remove_directory(tmpdir, data_instance):
     - None
     """
     # Create a temporary directory for testing
-    test_dir = tmpdir.mkdir('test_directory')
+    test_dir = tmpdir.mkdir("test_directory")
 
     # Create some files and subdirectories in the test directory
-    test_file = test_dir.join('test_file.txt')
-    test_file.write('This is a test file.')
+    test_file = test_dir.join("test_file.txt")
+    test_file.write("This is a test file.")
 
-    subdirectory = test_dir.mkdir('subdirectory')
-    subdirectory_file = subdirectory.join('sub_file.txt')
-    subdirectory_file.write('This is a file in the subdirectory.')
+    subdirectory = test_dir.mkdir("subdirectory")
+    subdirectory_file = subdirectory.join("sub_file.txt")
+    subdirectory_file.write("This is a file in the subdirectory.")
 
     # Call the remove_directory function
     data_instance.remove_directory(str(test_dir))
@@ -163,11 +163,11 @@ def test_remove_directory(tmpdir, data_instance):
 
 @pytest.fixture
 def test_directory(tmp_path):
-    dir_path = tmp_path / 'test_directory'
+    dir_path = tmp_path / "test_directory"
     dir_path.mkdir()
 
     # Create some files and subdirectories
-    file_names = ['file1.txt', 'file2.txt', 'file3.md', 'subdir/file4.txt']
+    file_names = ["file1.txt", "file2.txt", "file3.md", "subdir/file4.txt"]
     for file_name in file_names:
         file_path = dir_path / file_name
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -182,14 +182,66 @@ def test_count_files_all_files(test_directory, data_instance):
 
 
 def test_count_files_filtered_by_extension(test_directory, data_instance):
-    total_files_txt = data_instance.count_files(
-        test_directory, extension='txt')
+    total_files_txt = data_instance.count_files(test_directory, extension="txt")
     assert total_files_txt == 3  # 3 txt files were created in the test directory
 
-    total_files_md = data_instance.count_files(test_directory, extension='md')
+    total_files_md = data_instance.count_files(test_directory, extension="md")
     assert total_files_md == 1  # 1 md file was created in the test directory
 
 
 def test_count_files_nonexistent_extension(test_directory, data_instance):
-    total_files = data_instance.count_files(test_directory, extension='png')
+    total_files = data_instance.count_files(test_directory, extension="png")
     assert total_files == 0
+
+
+def test_list_files_recursive(data_instance):
+    # Create a temporary directory with files for testing
+    import tempfile
+    import shutil
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create files
+        open(os.path.join(temp_dir, "file1.txt"), "w").close()
+        open(os.path.join(temp_dir, "file2.txt"), "w").close()
+        open(os.path.join(temp_dir, "file3.jpg"), "w").close()
+        os.mkdir(os.path.join(temp_dir, "subdir"))
+        open(os.path.join(temp_dir, "subdir", "file4.txt"), "w").close()
+
+        # Test with extension filter
+        result = data_instance.list_files_recursive(temp_dir, extension="txt")
+        expected = [
+            os.path.join(temp_dir, "file1.txt"),
+            os.path.join(temp_dir, "file2.txt"),
+            os.path.join(temp_dir, "subdir", "file4.txt"),
+        ]
+        assert sorted(result) == sorted(expected)
+
+        # Test without extension filter
+        result = data_instance.list_files_recursive(temp_dir)
+        expected = [
+            os.path.join(temp_dir, "file1.txt"),
+            os.path.join(temp_dir, "file2.txt"),
+            os.path.join(temp_dir, "file3.jpg"),
+            os.path.join(temp_dir, "subdir", "file4.txt"),
+        ]
+        assert sorted(result) == sorted(expected)
+
+
+@pytest.fixture
+def base_path(tmpdir):
+    return tmpdir.strpath
+
+
+def test_generate_random_directory(base_path, data_instance):
+    num_directories = 3
+
+    # Call the function
+    result_directories = data_instance.generate_random_directory(base_path, num_directories)
+
+    # Check if the correct number of directories is created
+    assert len(result_directories) == num_directories
+
+    # Check if each directory exists
+    for directory in result_directories:
+        assert os.path.exists(directory)
+        assert os.path.isdir(directory)

@@ -134,6 +134,6 @@ dmypy.json
 .DS_Store
 
 .logs/*.log
-data/applications/app-*
-
+data/applications/*
 audit_database.db
+thirdparty/*
