@@ -10,44 +10,6 @@ from spark_tunning_ml.embeddings import Embeddings
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.milvus import MilvusWrapper
 
-TRANSFORMATIONS = [
-    "map",
-    "filter",
-    "flatMap",
-    "mapPartitions",
-    "mapPartitionsWithIndex",
-    "sample",
-    "union",
-    "intersection",
-    "distinct",
-    "groupByKey",
-    "reduceByKey",
-    "aggregateByKey",
-    "sortByKey",
-    "join",
-    "cogroup",
-    "cartesian",
-    "pipe",
-    "coalesce",
-    "repartition",
-    "repartitionAndSortWithinPartitions",
-]
-
-ACTIONS = [
-    "reduce",
-    "collect",
-    "count",
-    "first",
-    "take",
-    "takeSample",
-    "takeOrdered",
-    "saveAsTextFile",
-    "saveAsSequenceFile",
-    "saveAsObjectFile",
-    "countByKey",
-    "foreach",
-]
-
 
 class Vectors:
     def __init__(self):
@@ -62,139 +24,136 @@ class Vectors:
         """
         self.milvus = MilvusWrapper(
             uri=config.get("internal_milvus_connection").get("uri"),
-            token=os.environ.get("MILVUS_TOKEN"),)
+            token=os.environ.get("MILVUS_TOKEN"),
+        )
 
-    def build_vector(
-        self,
-        list_apps=[],
-        data_source_path="data/applications",
-        path_vector="/tmp/vectors",
-    ):
-        """
-        Generates a vector by processing data from the specified data source path.
+    def check_property(self, data, property, default_value=None):
+        if property in data:
+            return data[property]
+        else:
+            return default_value
 
-        Args:
-            data_source_path (str, optional): The path to the data source. Defaults to "data/applications".
-
-        Returns:
-            str: The path to the generated vector.
-        """
-
-        # Get the path to the stage info from the configuration
+    def build_vector(self, list_apps=[], data_source_path="data/applications", path_vector="/tmp/vectors"):
         stage_path = config.get("spark_ui_path_stage_info")
         environment_path = config.get("spark_ui_path_environment")
 
-        # Loop through each application
-        for app in list_apps:
-            # Initialize empty dataframes for stage and tasks
-            df_stage = pd.DataFrame()
-            df_tasks = pd.DataFrame()
+        try:
+            for app in list_apps:
+                df_stage = pd.DataFrame()
+                df_tasks = pd.DataFrame()
 
-            try:
-                # Read the JSON file
-                json_environment = data.list_files_recursive(
-                    directory=f"{data_source_path}/{app}/{environment_path}",
-                    extension="json",
-                )
+                try:
+                    json_environment = data.list_files_recursive(
+                        os.path.join(data_source_path, app, environment_path), extension="json"
+                    )
+                    if not json_environment:
+                        logger.error(f"Environment file not found for {app}")
+                        continue
 
-                if len(json_environment) == 0:
-                    logger.error("Environment file not found")
-                    break
+                    with open(json_environment[0], "r") as data_environment_file:
+                        json_environment_data = data_environment_file.read()
 
-                with open(json_environment[0], "r") as data_environment_file:
-                    json_environment_data = data_environment_file.read()
+                    json_environment = json.loads(json_environment_data)[0]
 
-                # Parse the JSON content
-                json_environment = json.loads(json_environment_data)
+                    if "spark.app.id" not in json_environment or "spark.app.name" not in json_environment:
+                        logger.error("id or name not found in environment")
+                        continue
 
-                if "spark.app.id" in json_environment[0] and "spark.app.name" in json_environment[0]:
-                    spark_app_id = json_environment[0].get("spark.app.id")
-                    spark_app_name = json_environment[0].get("spark.app.name")
+                    spark_properties = json_environment
+                    system_properties = json_environment
+
+                    spark_app_id = self.check_property(spark_properties, "spark.app.id", default_value="N/A")
+                    spark_app_name = self.check_property(spark_properties, "spark.app.name", default_value="N/A")
+
+                    spark_dynamic_allocation = int(
+                        self.check_property(spark_properties, "spark.dynamicAllocation.enabled", default_value="0")
+                        == "true"
+                    )
+                    spark_dynamic_allocation_min = self.check_property(
+                        spark_properties, "spark.dynamicAllocation.minExecutors", default_value=0
+                    )
+                    spark_dynamic_allocation_max = self.check_property(
+                        spark_properties, "spark.dynamicAllocation.maxExecutors", default_value=0
+                    )
+
+                    spark_user_name = self.check_property(system_properties, "user.name", default_value="N/A")
 
                     logger.info(f"Processing {spark_app_id} - {spark_app_name}")
-                else:
-                    logger.error("id or name not found in environment")
-                    break
-
-            except Exception as e:
-                # Log any errors encountered while processing the file
-                logger.error(f"Error processing environment file {json_environment}: {str(e)}")
-
-            # Get a list of all JSON files in the application's stage path
-            list_stages_json = data.list_files_recursive(
-                directory=f"{data_source_path}/{app}/{stage_path}", extension="json"
-            )
-
-            # Loop through each JSON file
-            for count, json_stage in enumerate(list_stages_json):
-                try:
-                    # Read the JSON file
-                    with open(json_stage, "r") as data_stage_file:
-                        json_data = data_stage_file.read()
-
-                    # Parse the JSON content
-                    json_stage_content = json.loads(json_data)
-
-                    if "stageId" not in json_stage_content[0]:
-                        break
-
-                    stage_id = [json_stage_content[0].get("stageId")]
-
-                    # Extract the stage data
-                    data_stage = {
-                        key: [json_stage_content[0].get(key)] for key in config.get("internal_vector_stage_columns")
-                    }
-
-                    data_stage["sparkAppId"] = [spark_app_id]
-                    data_stage["sparkAppName"] = [spark_app_name]
-
-                    # Extract and normalize the task data
-                    for key, value in json_stage_content[0].get("tasks", {}).items():
-                        json_normalized = pd.json_normalize(value).assign(stageId=stage_id)
-                        df_tasks = pd.concat([df_tasks, json_normalized])
-
-                    # Append the stage data to the stage dataframe
-                    df_stage = pd.concat([df_stage, pd.DataFrame(data_stage)])
 
                 except Exception as e:
-                    # Log any errors encountered while processing the file
-                    logger.error(f"Error processing file {json_stage}: {str(e)}")
+                    logger.error(f"Error processing environment file {json_environment}: {str(e)}")
+                    continue
 
-            try:
-                # Define the aggregation dictionary for tasks
-                agg_dict = {
-                    key: config.get("internal_vector_tasks_aggegation_metrics")
-                    for key in config.get("internal_vector_tasks_columns")
-                }
-
-                # Group and aggregate the task data
-                df_tasks_agg = df_tasks.groupby(["stageId"]).agg(agg_dict)
-                df_tasks_agg.columns = [f"{col[0]}_{col[1]}Agg" for col in df_tasks_agg.columns]
-
-                # Combine the stage and task data based on stageId
-                df_combined = pd.merge(
-                    df_stage,
-                    df_tasks_agg,
-                    on="stageId",
-                    how="inner",
-                    validate="one_to_one",
+                list_stages_json = data.list_files_recursive(
+                    os.path.join(data_source_path, app, stage_path), extension="json"
                 )
 
-                df_combined = df_combined.reset_index()
+                for count, json_stage in enumerate(list_stages_json):
+                    try:
+                        with open(json_stage, "r") as data_stage_file:
+                            json_data = data_stage_file.read()
 
-                # Define the output file path
-                path_vector_path_app = f"{path_vector}/{app}.csv"
+                        json_stage_content = json.loads(json_data)
 
-                # Save the combined data to a CSV file
-                df_combined.to_csv(path_vector_path_app, index=False)
+                        if "stageId" not in json_stage_content[0]:
+                            break
 
-                # Log the successful processing and saving of data
-                logger.info(f"Processed and saved data for {app} to {path_vector_path_app}")
-            except Exception as e:
-                logger.error(f"Error processing aggregation file {json_stage}: {str(e)}")
-                continue
+                        stage_id = [json_stage_content[0]["stageId"]]
 
-        # Return the path to the generated vector
+                        data_stage = {
+                            key: [json_stage_content[0].get(key)] for key in config.get("internal_vector_stage_columns")
+                        }
+                        data_stage["sparkAppId"] = [spark_app_id]
+                        data_stage["sparkAppName"] = [spark_app_name]
+                        data_stage["dynamicAllocationEnabled"] = [spark_dynamic_allocation]
+                        data_stage["dynamicAllocationMinExecutors"] = [spark_dynamic_allocation_min]
+                        data_stage["dynamicAllocationMaxExecutors"] = [spark_dynamic_allocation_max]
+                        data_stage["userName"] = [spark_user_name]
+                        data_stage["numExecutorsAssocStage"] = [len(json_stage_content[0].get("executorSummary", {}))]
+
+                        for key, value_stage in json_stage_content[0].get("tasks", {}).items():
+                            json_normalized_stage = pd.json_normalize(value_stage).assign(stageId=stage_id)
+                            df_tasks = pd.concat([df_tasks, json_normalized_stage])
+
+                        df_stage = pd.concat([df_stage, pd.DataFrame(data_stage)])
+
+                    except Exception as e:
+                        logger.error(f"Error processing file {json_stage}: {str(e)}")
+
+                try:
+                    agg_dict = {
+                        key: config.get("internal_vector_tasks_aggegation_metrics")
+                        for key in config.get("internal_vector_tasks_agg_columns")
+                    }
+                    df_tasks_agg = df_tasks.groupby(["stageId"]).agg(agg_dict)
+                    df_tasks_agg.columns = [f"{col[0]}.{col[1]}Agg" for col in df_tasks_agg.columns]
+
+                    df_combined = pd.merge(df_stage, df_tasks_agg, on="stageId", how="inner", validate="one_to_one")
+                    df_combined = df_combined.reset_index()
+
+                    df_combined["firstTaskLaunchedTime"] = df_combined["firstTaskLaunchedTime"].apply(
+                        lambda x: data.convert_date_to_epoch(str(x))
+                    )
+                    df_combined["completionTime"] = df_combined["completionTime"].apply(
+                        lambda x: data.convert_date_to_epoch(str(x))
+                    )
+
+                    df_combined["totalTimeSec"] = df_combined.apply(
+                        lambda row: abs(row["completionTime"] - row["firstTaskLaunchedTime"]), axis=1
+                    )
+
+                    path_vector_path_app = os.path.join(path_vector, f"{app}.csv")
+                    df_combined.to_csv(path_vector_path_app, index=False)
+
+                    logger.info(f"Processed and saved data for {app} to {path_vector_path_app}")
+
+                except Exception as e:
+                    logger.error(f"Error processing aggregation file {json_stage}: {str(e)}")
+                    continue
+
+        except Exception as e:
+            logger.error(f"General error in build_vector: {str(e)}")
+
         return path_vector
 
     def milvus_load_data(self, path_files):

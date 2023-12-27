@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import re
 from typing import Dict, List, Union
 
 from spark_tunning_ml.config import config
+from spark_tunning_ml.logger import logger
 from spark_tunning_ml.request_wrapper import RequestWrapper
 from spark_tunning_ml.schema import SchemaValidator
 
@@ -83,7 +85,7 @@ class SparkUIWrapper:
 
         return applications
 
-    def get_ids_from_applications(self, applications):
+    def get_ids_from_applications(self, applications, filter_users_pattern=None):
         """
         Get a list of IDs from a list of applications.
 
@@ -97,10 +99,16 @@ class SparkUIWrapper:
         ids = []
 
         for app in applications:
-            attemptids = []
-            for attempt in app["attempts"]:
-                attemptids.append(int(attempt.get("attemptId", 0)))
-            ids.append({app["id"]: max(attemptids)})
+            attemptids = [
+                int(attempt.get("attemptId", 0))
+                for attempt in app["attempts"]
+                if re.match(filter_users_pattern, attempt.get("sparkUser"))
+            ]
+
+            if attemptids:
+                ids.append({app["id"]: max(attemptids)})
+            else:
+                logger.warning(f"Discarding {app['id']}. Not matching filter users {filter_users_pattern}")
         return ids
 
     def get_tasks_from_stages_normalized(self, raw_stages):
@@ -1244,11 +1252,16 @@ class SparkUIWrapper:
         Returns:
             list: A list of Spark properties.
         """
-        spark_properties = environment_info[0]["sparkProperties"]
-        spark_properties_list = {}
 
-        for properties in spark_properties:
-            spark_properties_list[properties[0]] = properties[1]
+        spark_properties_list = {}
+        system_properties_list = {}
+
+        for spark_properties in environment_info[0]["sparkProperties"]:
+            spark_properties_list[spark_properties[0]] = spark_properties[1]
+
+        for system_properties in environment_info[0]["systemProperties"]:
+            system_properties_list[system_properties[0]] = system_properties[1]
+            spark_properties_list.update(system_properties_list)
 
         return spark_properties_list
 

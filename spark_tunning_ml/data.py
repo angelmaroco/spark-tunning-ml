@@ -5,6 +5,7 @@ import json
 import os
 import random
 import string
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -388,3 +389,15 @@ class Data:
             created_directories.append(new_directory_path)
 
         return created_directories
+
+    @staticmethod
+    def convert_date_to_epoch(date_string):
+        date_format = "%Y-%m-%dT%H:%M:%S.%fGMT"
+
+        # Convert the string to a datetime object
+        dt_object = datetime.strptime(date_string, date_format)
+
+        # Convert the datetime object to epoch time
+        epoch_time = int(dt_object.replace(tzinfo=timezone.utc).timestamp())
+
+        return epoch_time

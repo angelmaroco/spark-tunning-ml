@@ -11,7 +11,7 @@ class MilvusWrapper:
 
     def connect(self):
         try:
-            connections.connect(alias='default', uri=self.uri, token=self.token)
+            connections.connect(alias="default", uri=self.uri, token=self.token)
         except MilvusException as e:
             logger.error(f"Failed to connect to Milvus: {e}")
 

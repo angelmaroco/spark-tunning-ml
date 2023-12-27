@@ -119,6 +119,8 @@ init:             	## Initialize the project based on an application template.
 clean_application:	## Clean data applications
 	@rm -rf ./data/applications/*
 	@rm -rf ./logs/*.log
+	@rm -rf audit_database.db
+	@rm -rf /tmp/spark-tunning-ml.log
 
 
 # This project has been generated from rochacbruno/python-project-template

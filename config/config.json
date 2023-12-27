@@ -1,6 +1,7 @@
 {
     "spark_ui_api_endpoint_version": "/version",
     "spark_ui_api_endpoint_applications": "/applications?status=completed&limit={apps_limit}",
+    "spark_ui_api_endpoint_applications_filter_user": "",
     "spark_ui_api_endpoint_environment": "/applications/{app_id}/environment",
     "spark_ui_api_endpoint_executors": "/applications/{app_id}/executors",
     "spark_ui_api_endpoint_stages": "/applications/{app_id}/stages?status=complete",
@@ -54,8 +55,9 @@
         "3.3.3",
         "3.1.2"
     ],
-    "internal_spark_ui_max_concurrency": 40,
-    "internal_spark_ui_apps_limit": 4,
+    "internal_spark_ui_max_concurrency_api": 40,
+    "internal_spark_ui_max_concurrency_vector": 40,
+    "internal_spark_ui_apps_limit": 2,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
@@ -64,6 +66,9 @@
     "internal_spark_ui_enabled_task_detail": false,
     "internal_vector_stage_columns": [
         "stageId",
+        "firstTaskLaunchedTime",
+        "completionTime",
+        "numTasks",
         "executorDeserializeTime",
         "executorDeserializeCpuTime",
         "executorRunTime",
@@ -91,7 +96,7 @@
         "shuffleWriteRecords",
         "name"
     ],
-    "internal_vector_tasks_columns": [
+    "internal_vector_tasks_agg_columns": [
         "taskMetrics.executorDeserializeTime",
         "taskMetrics.executorDeserializeCpuTime",
         "taskMetrics.executorRunTime",
@@ -111,7 +116,8 @@
         "taskMetrics.shuffleReadMetrics.recordsRead",
         "taskMetrics.shuffleWriteMetrics.bytesWritten",
         "taskMetrics.shuffleWriteMetrics.writeTime",
-        "taskMetrics.shuffleWriteMetrics.recordsWritten"
+        "taskMetrics.shuffleWriteMetrics.recordsWritten",
+        "taskMetrics.inputMetrics.bytesRead"
     ],
     "internal_vector_tasks_aggegation_metrics": [
         "min",
@@ -144,6 +150,22 @@
         },
         "stageId": {
             "type": "INT64",
+            "is_primary": false
+        },
+        "firstTaskLaunchedTime": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "completionTime": {
+            "type": "INT64",
+            "is_primary": false
+        },
+        "totalTimeSec": {
+            "type": "INT16",
+            "is_primary": false
+        },
+        "numTasks": {
+            "type": "INT16",
             "is_primary": false
         },
         "resultSize": {

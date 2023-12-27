@@ -34,6 +34,8 @@ class Embeddings:
         # Filter columns
         df = df[list_fields_schema]
 
+        df.to_csv("/tmp/entities.csv", index=False)
+
         logger.info("Building entities")
         entities = [[] for _ in range(df.columns.size)]
 

@@ -284,8 +284,10 @@ def main():
 
     logger.info(f"Found {len(applications)} applications")
 
+    filter_users_pattern = config.get("spark_ui_api_endpoint_applications_filter_user")
+
     # Get the application IDs from the applications list
-    applications_ids = sparkui.get_ids_from_applications(applications)
+    applications_ids = sparkui.get_ids_from_applications(applications, filter_users_pattern=filter_users_pattern)
 
     # Enable debug mode if configured
     debug_mode_enabled = config.get("internal_spark_ui_debug_mode_enabled")
@@ -311,11 +313,12 @@ def main():
     # Create a ThreadPoolExecutor object with the maximum concurrency limit specified in the configuration
     # This will allow us to execute multiple tasks concurrently
     with ThreadPoolExecutor(
-        config.get("internal_spark_ui_max_concurrency"),
+        config.get("internal_spark_ui_max_concurrency_api"),
     ) as executor:
+        futures_executor = []
         for app in applications_ids:
             for id, attempid in app.items():
-                executor.submit(process_application, id, attempid, sparkui)
+                futures_executor.append(executor.submit(process_application, id, attempid, sparkui))
 
     if config.get("internal_milvus_load_data"):
         logger.info("Generating data source for milvus vectors")
@@ -331,11 +334,11 @@ def main():
             path_vector = data.generate_random_directory(config.get("internal_vector_output_path"), 1)[0]
 
             with ThreadPoolExecutor(
-                40,
+                config.get("internal_spark_ui_max_concurrency_vector"),
             ) as vector:
-                futures = []
+                futures_vector = []
                 for app in list_apps:
-                    futures.append(vector.submit(vectors.build_vector, [app], data_source_path, path_vector))
+                    futures_vector.append(vector.submit(vectors.build_vector, [app], data_source_path, path_vector))
 
             vectors.milvus_load_data(path_vector)
 
