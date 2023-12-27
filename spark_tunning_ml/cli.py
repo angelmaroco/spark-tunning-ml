@@ -102,7 +102,7 @@ def process_stage(sparkui, path_stage, stages, id, attemptid):
 
         return list_raw_stages
     else:
-        logger.info("No stages found.")
+        logger.info("No stage found.")
         return []
 
 
@@ -213,7 +213,7 @@ def process_application(id, attemptid, sparkui):
     stages = process_stages(sparkui, paths[1], id, attemptid)
 
     if not data.check_empty_list(stages):
-        logger.info("No stages found. Ommiting application")
+        logger.info("No stages found. Ommiting application (removing directory)")
         data.remove_directory(path_root)
     else:
         raw_stages = process_stage(
