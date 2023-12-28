@@ -118,7 +118,9 @@ init:             	## Initialize the project based on an application template.
 .PHONY: clean_application
 clean_application:	## Clean data applications
 	@rm -rf ./data/applications/*
+	@rm -rf ./data/errors/*
 	@rm -rf ./logs/*.log
+	@rm -rf /tmp/spark-ui-vector/*
 	@rm -rf audit_database.db
 	@rm -rf /tmp/spark-tunning-ml.log
 

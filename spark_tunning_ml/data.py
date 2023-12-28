@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import random
+import shutil
 import string
 from datetime import datetime, timezone
 
@@ -236,6 +237,33 @@ class Data:
 
         # Return the number of deleted files
         return len(matching_files)
+    
+    @staticmethod
+    def delete_file(file_path):
+        """
+        Delete a file.
+
+        Args:
+            file_path (str): The path to the file to be deleted.
+
+        Raises:
+            FileNotFoundError: If the specified file is not found.
+            PermissionError: If there are permission issues while attempting to delete the file.
+            Exception: If any other unexpected error occurs during the file deletion process.
+
+        Returns:
+            None
+        """
+        try:
+            os.remove(file_path)
+            logger.info(f"File '{file_path}' deleted successfully.")
+        except FileNotFoundError:
+            logger.error(f"File '{file_path}' not found.")
+        except PermissionError:
+            logger.error(f"Permission denied. Unable to delete '{file_path}'.")
+        except Exception as e:
+            logger.error(f"An error occurred while deleting '{file_path}': {str(e)}")
+
 
     @staticmethod
     def remove_directory(directory_path):
@@ -401,3 +429,66 @@ class Data:
         epoch_time = int(dt_object.replace(tzinfo=timezone.utc).timestamp())
 
         return epoch_time
+
+    @staticmethod
+    def move_directory(source_directory, destination_directory):
+        """
+        Move a directory to another directory.
+
+        Args:
+            source_directory (str): The path to the source directory to be moved.
+            destination_directory (str): The path to the destination directory.
+
+        Raises:
+            FileNotFoundError: If the source directory is not found.
+            PermissionError: If there are permission issues while attempting to move the directory.
+            shutil.Error: If any other error occurs during the directory move process.
+
+        Returns:
+            None
+        """
+        try:
+            shutil.move(source_directory, destination_directory)
+            print(f"Directory '{source_directory}' moved to '{destination_directory}' successfully.")
+        except FileNotFoundError:
+            print(f"Source directory '{source_directory}' not found.")
+        except PermissionError:
+            print(f"Permission denied. Unable to move '{source_directory}'.")
+        except shutil.Error as e:
+            print(f"An error occurred while moving '{source_directory}': {str(e)}")
+
+
+    @staticmethod
+    def rename_file(old_file_path, new_file_name):
+        """
+        Rename a file.
+
+        Args:
+            old_file_path (str): The path to the file to be renamed.
+            new_file_name (str): The new name for the file.
+
+        Raises:
+            FileNotFoundError: If the specified file is not found.
+            PermissionError: If there are permission issues while attempting to rename the file.
+            Exception: If any other unexpected error occurs during the file renaming process.
+
+        Returns:
+            None
+        """
+        try:
+            # Extract the directory path from the old file path
+            directory_path, old_file_name = os.path.split(old_file_path)
+            
+            # Construct the new file path by joining the directory path and the new file name
+            new_file_path = os.path.join(directory_path, new_file_name)
+            
+            # Rename the file
+            os.rename(old_file_path, new_file_path)
+            
+            logger.info(f"File '{old_file_path}' renamed to '{new_file_path}' successfully.")
+        except FileNotFoundError:
+            logger.error(f"File '{old_file_path}' not found.")
+        except PermissionError:
+            logger.error(f"Permission denied. Unable to rename '{old_file_path}'.")
+        except Exception as e:
+            logger.error(f"An error occurred while renaming '{old_file_path}': {str(e)}")

@@ -197,6 +197,7 @@ def process_application(id, attemptid, sparkui):
         logger.info(f"Application {id} already processed. Skipping")
         return
 
+    path_errors = config.get("spark_ui_path_errors")
     path_root = f'{config.get("spark_ui_path_root")}/{id}'
 
     paths = [
@@ -213,8 +214,8 @@ def process_application(id, attemptid, sparkui):
     stages = process_stages(sparkui, paths[1], id, attemptid)
 
     if not data.check_empty_list(stages):
-        logger.info("No stages found. Ommiting application (removing directory)")
-        data.remove_directory(path_root)
+        logger.info("No stages found. Ommiting application (moving to errors directory)")
+        data.move_directory(path_root, path_errors)
     else:
         raw_stages = process_stage(
             sparkui,

@@ -95,6 +95,12 @@ class Vectors:
 
                         json_stage_content = json.loads(json_data)
 
+                        status = json_stage_content[0]["status"]
+
+                        if status != "COMPLETE":
+                            logger.warning(f"Removing stage not complete ({status}) for application {spark_app_id}")
+                            data.delete_file(json_stage)
+
                         if "stageId" not in json_stage_content[0]:
                             break
 
