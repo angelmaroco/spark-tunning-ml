@@ -180,10 +180,10 @@ class MilvusWrapper:
         if not self.collection:
             raise MilvusException("Collection not initialized. Create a collection first.")
         try:
-            logger.info("start insert")
+            logger.info("Start insert")
             self.collection.insert(data)
             self.collection.flush()
-            logger.info("end insert")
+            logger.info("End insert")
         except MilvusException as e:
             logger.error(f"Failed to insert data: {e}")
 

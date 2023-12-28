@@ -492,3 +492,18 @@ class Data:
             logger.error(f"Permission denied. Unable to rename '{old_file_path}'.")
         except Exception as e:
             logger.error(f"An error occurred while renaming '{old_file_path}': {str(e)}")
+
+    @staticmethod
+    def generate_random_string(length):
+        """
+        Generate a random string of the specified length.
+
+        Parameters:
+        - length (int): The desired length of the random string.
+
+        Returns:
+        - str: A random string consisting of uppercase letters, lowercase letters, and digits.
+        """
+        characters = string.ascii_letters + string.digits
+        random_string = ''.join(random.choice(characters) for _ in range(length))
+        return random_string

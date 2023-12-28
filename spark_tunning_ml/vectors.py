@@ -166,11 +166,11 @@ class Vectors:
         spark_collection = config.get("internal_milvus_collection_spark_metrics")
         spark_fields = config.get("internal_milvus_fields_spark_metrics")
 
-        OUTPUT_FILE = "merge_all_applications.csv"
+        OUTPUT_FILE = "merge_application"
 
         self.milvus.connect()
 
-        logger.info(self.milvus.list_collections())
+        logger.info(f"Collections{str(self.milvus.list_collections())}")
 
         if self.milvus.has_collection(spark_collection):
             self.milvus.drop_collection(spark_collection)
@@ -179,16 +179,25 @@ class Vectors:
 
         all_files = glob.glob(os.path.join(path_files, "*.csv"))
 
-        df = pd.concat((pd.read_csv(f) for f in all_files), ignore_index=True)
-        df.to_csv(f"{path_files}/{OUTPUT_FILE}", index=False)
-
         embedding_instance = Embeddings(model_name=config.get("internal_milvus_model_embeddins"))
 
         exclude_own_langchain = config.get("internal_milvus_fields_exclude_own_langchain")
         list_field_schema = [item for item in spark_fields if item not in exclude_own_langchain]
 
-        data_vector = embedding_instance.build_entities(f"{path_files}/{OUTPUT_FILE}", list_field_schema)
-        self.milvus.insert_data(data_vector)
+
+        bulk_num_files = config.get("internal_milvuls_bulk_num_csv")
+
+        for i in range(0, len(all_files), bulk_num_files):
+            batch = all_files[i:i + bulk_num_files]
+            
+            random_string = data.generate_random_string(4)
+            
+            num_rows = self.read_and_concatenate_batch(batch, f"{path_files}/{OUTPUT_FILE}_{random_string}.csv")
+            
+            data_vector = embedding_instance.build_entities(f"{path_files}/{OUTPUT_FILE}_{random_string}.csv", list_field_schema)
+
+            logger.info(f"Inserting {num_rows} rows")
+            self.milvus.insert_data(data_vector)
 
         index_params = {
             "metric_type": "L2",
@@ -204,7 +213,15 @@ class Vectors:
 
         logger.info("End process")
 
-    def test_milvus(self):
+    def read_and_concatenate_batch(self, batch, path_csv):
+        # Read and concatenate data from CSV files in the batch
+        batch_dataframes = [pd.read_csv(file_path) for file_path in batch]
+        concatenated_data = pd.concat(batch_dataframes, ignore_index=True)
+        concatenated_data.to_csv(path_csv, index=False)
+        return len(concatenated_data)
+        
+
+    def milvus_load_collection(self):
         self.milvus.connect()
 
         spark_collection = config.get("internal_milvus_collection_spark_metrics")

@@ -266,88 +266,84 @@ def initialize_spark_ui(sparkui_api_url):
     return sparkui
 
 
-def main():
-    """
-    Entry point of the program.
-    """
-    # Parse command line arguments
-    args = parse_arguments()
-
-    # Initialize SparkUIWrapper with the base URL
-    sparkui = initialize_spark_ui(args.sparkui_api_url)
-
-    # Get the version of Spark API
-    version = sparkui.get_version().get("spark", "unknown")
-
-    # Check if the version is allowed
-    if version not in config.get("internal_spark_ui_compatible_versions"):
+def check_spark_version(version):
+    allowed_versions = config.get("internal_spark_ui_compatible_versions")
+    if version not in allowed_versions:
         logger.critical(f"Spark API version {version} not allowed.")
         sys.exit()
     else:
         logger.info(f"Spark API version: {version}")
 
-    if config.get("internal_spark_ui_load_applications"):
-        apps_limit = config.get("internal_spark_ui_apps_limit")
-        # Get the list of applications from Spark UI
-        applications = sparkui.get_applications(apps_limit)
-
-        logger.info(f"Found {len(applications)} applications")
-
-        filter_users_pattern = config.get("spark_ui_api_endpoint_applications_filter_user")
-
-        # Get the application IDs from the applications list
-        applications_ids = sparkui.get_ids_from_applications(applications, filter_users_pattern=filter_users_pattern)
-
-        # Enable debug mode if configured
-        debug_mode_enabled = config.get("internal_spark_ui_debug_mode_enabled")
-        max_apps = config.get("internal_spark_ui_debug_mode_max_apps")
-        test_concurrency = config.get("internal_spark_ui_debug_mode_test_concurrency")
-
-        if debug_mode_enabled:
-            logger.info(f"Debug mode enabled. Max applications: {max_apps}")
-            applications_ids = applications_ids[:max_apps]
-
-            if test_concurrency:
-                logger.info("Test concurrency enabled")
-                applications_ids *= config.get("internal_spark_ui_debug_mode_test_concurrency_apps")
-
-        # Check if the applications list is empty
-        if not data.check_empty_list(applications_ids):
-            sys.exit()
-
-        # Create a ThreadPoolExecutor object with the maximum concurrency limit specified in the configuration
-        # This will allow us to execute multiple tasks concurrently
-        with ThreadPoolExecutor(config.get("internal_spark_ui_max_concurrency_api")) as executor:
-            futures_executor = [executor.submit(process_application, id, attempid, sparkui) for app in applications_ids for id, attempid in app.items()]
-    else:
+def process_applications(sparkui):
+    if not config.get("internal_spark_ui_load_applications"):
         logger.info("Omitting applications processing")
+        return
 
-    if config.get("internal_milvus_load_data"):
-        logger.info("Generating data source for milvus vectors")
-        vectors = Vectors()
+    apps_limit = config.get("internal_spark_ui_apps_limit")
+    applications = sparkui.get_applications(apps_limit)
+    logger.info(f"Found {len(applications)} applications")
 
-        data_source_path = "data/applications"
+    filter_users_pattern = config.get("spark_ui_api_endpoint_applications_filter_user")
+    applications_ids = sparkui.get_ids_from_applications(applications, filter_users_pattern=filter_users_pattern)
 
-        # Get a list of all applications in the data source path
-        list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
+    debug_mode_enabled = config.get("internal_spark_ui_debug_mode_enabled")
+    max_apps = config.get("internal_spark_ui_debug_mode_max_apps")
+    test_concurrency = config.get("internal_spark_ui_debug_mode_test_concurrency")
 
-        if data.check_empty_list(list_apps):
-            # Generate a random directory path for the vector output
-            path_vector = data.generate_random_directory(config.get("internal_vector_output_path"), 1)[0]
+    if debug_mode_enabled:
+        logger.info(f"Debug mode enabled. Max applications: {max_apps}")
+        applications_ids = applications_ids[:max_apps]
 
-            with ThreadPoolExecutor(config.get("internal_spark_ui_max_concurrency_vector")) as vector:
-                futures_vector = [vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps]
+        if test_concurrency:
+            logger.info("Test concurrency enabled")
+            applications_ids *= config.get("internal_spark_ui_debug_mode_test_concurrency_apps")
 
-            vectors.milvus_load_data(path_vector)
-    else:
+    if not data.check_empty_list(applications_ids):
+        sys.exit()
+
+    concurrency_limit = config.get("internal_spark_ui_max_concurrency_api")
+    with ThreadPoolExecutor(concurrency_limit) as executor:
+        futures_executor = [executor.submit(process_application, id, attempid, sparkui) for app in applications_ids for id, attempid in app.items()]
+
+def process_milvus_data():
+    if not config.get("internal_milvus_load_data"):
         logger.info("Omitting milvus load data")
+        return
 
-    if config.get("internal_milvus_load_collection"):
-        logger.info("Loading milvus collection")
-        vectors = Vectors()
-        vectors.test_milvus()
-    else:
+    logger.info("Generating data source for milvus vectors")
+    vectors = Vectors()
+    data_source_path = "data/applications"
+    list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
+
+    if data.check_empty_list(list_apps):
+        path_vector = data.generate_random_directory(config.get("internal_vector_output_path"), 1)[0]
+
+        concurrency_limit = config.get("internal_spark_ui_max_concurrency_vector")
+        with ThreadPoolExecutor(concurrency_limit) as vector:
+            futures_vector = [vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps]
+
+        vectors.milvus_load_data(path_vector)
+
+def process_milvus_collection():
+    if not config.get("internal_milvus_load_collection"):
         logger.info("Omitting milvus load collection")
+        return
+
+    logger.info("Loading milvus collection")
+    vectors = Vectors()
+    vectors.milvus_load_collection()
+
+def main():
+    args = parse_arguments()
+
+    sparkui = initialize_spark_ui(args.sparkui_api_url)
+    
+    version = sparkui.get_version().get("spark", "unknown")
+    check_spark_version(version)
+
+    process_applications(sparkui)
+    process_milvus_data()
+    process_milvus_collection()
 
 
 if __name__ == "__main__":
