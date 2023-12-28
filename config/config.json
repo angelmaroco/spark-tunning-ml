@@ -56,6 +56,7 @@
         "3.3.3",
         "3.1.2"
     ],
+    "internal_spark_ui_load_applications": false,
     "internal_spark_ui_max_concurrency_api": 40,
     "internal_spark_ui_max_concurrency_vector": 40,
     "internal_spark_ui_apps_limit": 3000,
@@ -130,8 +131,8 @@
     "internal_milvus_connection": {
         "uri": "https://in03-2bac68083184640.api.gcp-us-west1.zillizcloud.com"
     },
-    "internal_milvus_load_data": true,
-    "internal_milvus_load_collection": true,
+    "internal_milvus_load_data": false,
+    "internal_milvus_load_collection": false,
     "internal_milvus_collection_spark_metrics": "SparkMetrics",
     "internal_milvus_fields_spark_metrics": {
         "pk": {
