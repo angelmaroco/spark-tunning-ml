@@ -56,10 +56,10 @@
         "3.3.3",
         "3.1.2"
     ],
-    "internal_spark_ui_load_applications": true,
-    "internal_spark_ui_max_concurrency_api": 40,
-    "internal_spark_ui_max_concurrency_vector": 40,
-    "internal_spark_ui_apps_limit": 3,
+    "internal_spark_ui_load_applications": false,
+    "internal_spark_ui_max_concurrency_api": 100,
+    "internal_spark_ui_max_concurrency_vector": 100,
+    "internal_spark_ui_apps_limit": 200,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
@@ -124,7 +124,8 @@
     "internal_vector_tasks_aggegation_metrics": [
         "min",
         "max",
-        "sum"
+        "sum",
+        "mean"
     ],
     "internal_vector_sufix_aggegation_metrics": ".agg",
     "internal_vector_output_path": "/tmp/spark-ui-vector",
@@ -133,6 +134,8 @@
     },
     "internal_milvus_load_data": true,
     "internal_milvus_load_collection": true,
+    "internal_milvus_force_rebuild_schema": true,
+    "internal_milvus_force_reprocess": true,
     "internal_milvuls_bulk_num_csv": 200,
     "internal_milvus_collection_spark_metrics": "SparkMetrics",
     "internal_milvus_fields_spark_metrics": {

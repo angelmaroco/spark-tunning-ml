@@ -1,13 +1,15 @@
 import pandas as pd
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-
+import torch.cuda
+import torch.backends
 from spark_tunning_ml.logger import logger
 
+EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 class Embeddings:
     def __init__(self, model_name="all-MiniLM-L6-v2"):
         self.model_name = model_name
-        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name)
+        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={'device': EMBEDDING_DEVICE})
 
     def get_model_name(self):
         return self.model_name
@@ -55,7 +57,7 @@ class Embeddings:
         pass
 
     def get_embedding(self):
-        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name)
+        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={'device': EMBEDDING_DEVICE})
         return self.embedding
 
     def get_data_vector(self, data):

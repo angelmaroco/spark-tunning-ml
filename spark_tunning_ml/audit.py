@@ -23,7 +23,6 @@ class Audit:
         try:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
-            # audit.add_app_id(id, 1, count_files_executors, count_files_stages, count_files_tasks, count_files_jobs, count_files_environment)
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit (
@@ -35,7 +34,8 @@ class Audit:
                     count_files_tasks INTEGER DEFAULT 0,
                     count_files_jobs INTEGER DEFAULT 0,
                     count_files_environment INTEGER DEFAULT 0,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    load_vector INTEGER DEFAULT 0
                 )
             """,
             )
@@ -111,7 +111,27 @@ class Audit:
         finally:
             conn.close()
 
-    def query_app_id(self, app_id):
+    def update_app_id(self, app_id, load_vector):
+        """
+        Update the `app_id` field in the `audit` table with the given `load_vector` for a specific `app_id`.
+
+        Parameters
+        - app_id (int): The ID of the app to update.
+        - load_vector (int): The load vector value to set for the app.
+        """
+
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE audit SET load_vector = ? WHERE app_id = ?", (load_vector, app_id,))
+
+            conn.commit()
+        except sqlite3.Error as e:
+            raise Exception(f"Error deleting app_id: {e}")
+        finally:
+            conn.close()
+
+    def query_app_id(self, app_id, processed=1):
         """
         Query if a specific app_id exists in the audit database.
 
@@ -126,7 +146,33 @@ class Audit:
             cursor = conn.cursor()
 
             cursor.execute(
-                "SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = 1",
+                "SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = ?",
+                (app_id, processed),
+            )
+            count = cursor.fetchone()[0]
+
+            return count > 0
+        except sqlite3.Error as e:
+            raise Exception(f"Error querying app_id: {e}")
+        finally:
+            conn.close()
+
+    def query_app_id_load_vector(self, app_id):
+        """
+        Query if a specific app_id exists in the audit database.
+
+        Parameters:
+        - app_id (str): Application identifier to be queried.
+
+        Returns:
+        - bool: True if the app_id exists, False otherwise.
+        """
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM audit WHERE app_id = ? and load_vector = 1",
                 (app_id,),
             )
             count = cursor.fetchone()[0]

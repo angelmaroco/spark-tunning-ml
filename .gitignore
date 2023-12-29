@@ -135,5 +135,6 @@ dmypy.json
 
 .logs/*.log
 data/applications/*
+data/errors/*
 audit_database.db
 thirdparty/*

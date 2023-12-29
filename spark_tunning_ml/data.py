@@ -203,12 +203,12 @@ class Data:
         """
         # Check if data_list is a list
         if not isinstance(data_list, list):
-            logger.error(f"Input data is not a list: {data_list}")
+            logger.warning(f"Input data is not a list: {data_list}")
             return False
 
         # Check if the list is empty
         if not data_list:
-            logger.error(f"Input list is empty: {data_list}")
+            logger.warning(f"Input list is empty: {data_list}")
             return False
 
         return True
@@ -449,13 +449,13 @@ class Data:
         """
         try:
             shutil.move(source_directory, destination_directory)
-            print(f"Directory '{source_directory}' moved to '{destination_directory}' successfully.")
+            logger.info(f"Directory '{source_directory}' moved to '{destination_directory}' successfully.")
         except FileNotFoundError:
-            print(f"Source directory '{source_directory}' not found.")
+            logger.error(f"Source directory '{source_directory}' not found.")
         except PermissionError:
-            print(f"Permission denied. Unable to move '{source_directory}'.")
+            logger.error(f"Permission denied. Unable to move '{source_directory}'.")
         except shutil.Error as e:
-            print(f"An error occurred while moving '{source_directory}': {str(e)}")
+            logger.error(f"An error occurred while moving '{source_directory}': {str(e)}")
 
 
     @staticmethod

@@ -37,12 +37,16 @@ class Vectors:
         stage_path = config.get("spark_ui_path_stage_info")
         environment_path = config.get("spark_ui_path_environment")
 
+        result_apps = []
+
         try:
             for app in list_apps:
                 df_stage = pd.DataFrame()
                 df_tasks = pd.DataFrame()
 
                 try:
+                    result_apps.append(app)
+                    
                     json_environment = data.list_files_recursive(
                         os.path.join(data_source_path, app, environment_path), extension="json"
                     )
@@ -160,11 +164,12 @@ class Vectors:
         except Exception as e:
             logger.error(f"General error in build_vector: {str(e)}")
 
-        return path_vector
+        return result_apps
 
     def milvus_load_data(self, path_files):
         spark_collection = config.get("internal_milvus_collection_spark_metrics")
         spark_fields = config.get("internal_milvus_fields_spark_metrics")
+        milvus_force_rebuild_schema = config.get("internal_milvus_force_rebuild_schema")
 
         OUTPUT_FILE = "merge_application"
 
@@ -172,10 +177,12 @@ class Vectors:
 
         logger.info(f"Collections{str(self.milvus.list_collections())}")
 
-        if self.milvus.has_collection(spark_collection):
-            self.milvus.drop_collection(spark_collection)
-
-        self.milvus.create_collection(spark_collection, spark_fields)
+        if milvus_force_rebuild_schema:
+            if self.milvus.has_collection(spark_collection):
+                self.milvus.drop_collection(spark_collection)
+            self.milvus.create_collection(spark_collection, spark_fields)
+        else:
+            self.milvus.get_collection(spark_collection)
 
         all_files = glob.glob(os.path.join(path_files, "*.csv"))
 
@@ -183,7 +190,6 @@ class Vectors:
 
         exclude_own_langchain = config.get("internal_milvus_fields_exclude_own_langchain")
         list_field_schema = [item for item in spark_fields if item not in exclude_own_langchain]
-
 
         bulk_num_files = config.get("internal_milvuls_bulk_num_csv")
 
@@ -199,12 +205,13 @@ class Vectors:
             logger.info(f"Inserting {num_rows} rows")
             self.milvus.insert_data(data_vector)
 
-        index_params = {
-            "metric_type": "L2",
-            "index_type": "IVF_FLAT",
-            "params": {"nlist": 1024},
-        }
-        self.milvus.create_index(field_name="vector", index_params=index_params)
+        if milvus_force_rebuild_schema:
+            index_params = {
+                "metric_type": "L2",
+                "index_type": "IVF_FLAT",
+                "params": {"nlist": 1024},
+            }
+            self.milvus.create_index(field_name="vector", index_params=index_params)
 
         logger.info(f"Number of entities in {spark_collection}: {self.milvus.get_entity_num()}")
 

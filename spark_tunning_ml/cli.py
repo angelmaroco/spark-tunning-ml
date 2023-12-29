@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import concurrent.futures
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
@@ -193,6 +192,11 @@ def process_application(id, attemptid, sparkui):
     """
     logger.info(f"Processing application {id}")
 
+    internal_milvus_force_reprocess = config.get("internal_milvus_force_reprocess")
+
+    if internal_milvus_force_reprocess:
+        audit.delete_app_id(id)
+
     if audit.query_app_id(id):
         logger.info(f"Application {id} already processed. Skipping")
         return
@@ -315,12 +319,26 @@ def process_milvus_data():
     data_source_path = "data/applications"
     list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
 
+
+    for app in list_apps[:]:
+        # Allows reprocessing of applications not available in API. 
+        # We add a dummy record to the audit table
+        if not audit.query_app_id(app, 1):
+            audit.add_app_id(app, 1, -1, -1, -1, -1, -1)
+
+        if audit.query_app_id_load_vector(app):
+            logger.info(f"{app} already processed")
+            list_apps.remove(app)
+
     if data.check_empty_list(list_apps):
         path_vector = data.generate_random_directory(config.get("internal_vector_output_path"), 1)[0]
 
         concurrency_limit = config.get("internal_spark_ui_max_concurrency_vector")
         with ThreadPoolExecutor(concurrency_limit) as vector:
             futures_vector = [vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps]
+        
+        for app in futures_vector:
+            audit.update_app_id(app.result()[0], 1)
 
         vectors.milvus_load_data(path_vector)
 
