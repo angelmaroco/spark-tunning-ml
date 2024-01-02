@@ -69,7 +69,7 @@
     ],
     "internal_spark_ui_max_concurrency_api": 100,
     "internal_spark_ui_max_concurrency_vector": 2,
-    "internal_spark_ui_apps_limit": 1,
+    "internal_spark_ui_apps_limit": 5,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
