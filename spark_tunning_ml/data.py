@@ -237,7 +237,7 @@ class Data:
 
         # Return the number of deleted files
         return len(matching_files)
-    
+
     @staticmethod
     def delete_file(file_path):
         """
@@ -263,7 +263,6 @@ class Data:
             logger.error(f"Permission denied. Unable to delete '{file_path}'.")
         except Exception as e:
             logger.error(f"An error occurred while deleting '{file_path}': {str(e)}")
-
 
     @staticmethod
     def remove_directory(directory_path):
@@ -457,7 +456,6 @@ class Data:
         except shutil.Error as e:
             logger.error(f"An error occurred while moving '{source_directory}': {str(e)}")
 
-
     @staticmethod
     def rename_file(old_file_path, new_file_name):
         """
@@ -478,13 +476,13 @@ class Data:
         try:
             # Extract the directory path from the old file path
             directory_path, old_file_name = os.path.split(old_file_path)
-            
+
             # Construct the new file path by joining the directory path and the new file name
             new_file_path = os.path.join(directory_path, new_file_name)
-            
+
             # Rename the file
             os.rename(old_file_path, new_file_path)
-            
+
             logger.info(f"File '{old_file_path}' renamed to '{new_file_path}' successfully.")
         except FileNotFoundError:
             logger.error(f"File '{old_file_path}' not found.")
@@ -505,5 +503,5 @@ class Data:
         - str: A random string consisting of uppercase letters, lowercase letters, and digits.
         """
         characters = string.ascii_letters + string.digits
-        random_string = ''.join(random.choice(characters) for _ in range(length))
+        random_string = "".join(random.choice(characters) for _ in range(length))
         return random_string

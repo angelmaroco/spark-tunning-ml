@@ -254,13 +254,19 @@ def process_application(id, attemptid, sparkui):
         count_files_environment,
     )
 
+
 def parse_arguments():
     """
     Parse command line arguments.
     """
     parser = argparse.ArgumentParser(description="Command-line usage of SparkTunningML.")
-    parser.add_argument("--sparkui_api_url", required=True, help="The base URL of the Spark UI API (e.g. http://spark-ui-api:8080/api/v1).")
+    parser.add_argument(
+        "--sparkui_api_url",
+        required=True,
+        help="The base URL of the Spark UI API (e.g. http://spark-ui-api:8080/api/v1).",
+    )
     return parser.parse_args()
+
 
 def initialize_spark_ui(sparkui_api_url):
     """
@@ -277,6 +283,7 @@ def check_spark_version(version):
         sys.exit()
     else:
         logger.info(f"Spark API version: {version}")
+
 
 def process_applications(sparkui):
     if not config.get("internal_spark_ui_load_applications"):
@@ -307,7 +314,12 @@ def process_applications(sparkui):
 
     concurrency_limit = config.get("internal_spark_ui_max_concurrency_api")
     with ThreadPoolExecutor(concurrency_limit) as executor:
-        futures_executor = [executor.submit(process_application, id, attempid, sparkui) for app in applications_ids for id, attempid in app.items()]
+        futures_executor = [
+            executor.submit(process_application, id, attempid, sparkui)
+            for app in applications_ids
+            for id, attempid in app.items()
+        ]
+
 
 def process_milvus_data():
     if not config.get("internal_milvus_load_data"):
@@ -319,9 +331,8 @@ def process_milvus_data():
     data_source_path = "data/applications"
     list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
 
-
     for app in list_apps[:]:
-        # Allows reprocessing of applications not available in API. 
+        # Allows reprocessing of applications not available in API.
         # We add a dummy record to the audit table
         if not audit.query_app_id(app, 1):
             audit.add_app_id(app, 1, -1, -1, -1, -1, -1)
@@ -335,12 +346,15 @@ def process_milvus_data():
 
         concurrency_limit = config.get("internal_spark_ui_max_concurrency_vector")
         with ThreadPoolExecutor(concurrency_limit) as vector:
-            futures_vector = [vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps]
-        
+            futures_vector = [
+                vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps
+            ]
+
         for app in futures_vector:
             audit.update_app_id(app.result()[0], 1)
 
         vectors.milvus_load_data(path_vector)
+
 
 def process_milvus_collection():
     if not config.get("internal_milvus_load_collection"):
@@ -351,11 +365,12 @@ def process_milvus_collection():
     vectors = Vectors()
     vectors.milvus_load_collection()
 
+
 def main():
     args = parse_arguments()
 
     sparkui = initialize_spark_ui(args.sparkui_api_url)
-    
+
     version = sparkui.get_version().get("spark", "unknown")
     check_spark_version(version)
 

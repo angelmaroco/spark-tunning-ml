@@ -1,15 +1,20 @@
 import pandas as pd
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-import torch.cuda
 import torch.backends
+import torch.cuda
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from pandarallel import pandarallel
+
 from spark_tunning_ml.logger import logger
 
+pandarallel.initialize()
+
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+
 
 class Embeddings:
     def __init__(self, model_name="all-MiniLM-L6-v2"):
         self.model_name = model_name
-        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={'device': EMBEDDING_DEVICE})
+        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={"device": EMBEDDING_DEVICE})
 
     def get_model_name(self):
         return self.model_name
@@ -28,7 +33,7 @@ class Embeddings:
         df = pd.read_csv(file_path)
 
         logger.info("Calculating combined field")
-        df["text"] = df.apply(lambda row: self.get_key_value_pairs(row), axis=1)
+        df["text"] = df.parallel_apply(lambda row: self.get_key_value_pairs(row), axis=1)
 
         logger.info("Calculating vector field")
         df["vector"] = self.get_data_vector(df["text"].to_list())
@@ -57,7 +62,7 @@ class Embeddings:
         pass
 
     def get_embedding(self):
-        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={'device': EMBEDDING_DEVICE})
+        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={"device": EMBEDDING_DEVICE})
         return self.embedding
 
     def get_data_vector(self, data):

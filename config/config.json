@@ -56,10 +56,10 @@
         "3.3.3",
         "3.1.2"
     ],
-    "internal_spark_ui_load_applications": false,
+    "internal_spark_ui_load_applications": true,
     "internal_spark_ui_max_concurrency_api": 100,
-    "internal_spark_ui_max_concurrency_vector": 100,
-    "internal_spark_ui_apps_limit": 200,
+    "internal_spark_ui_max_concurrency_vector": 2,
+    "internal_spark_ui_apps_limit": 10,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
@@ -122,10 +122,7 @@
         "taskMetrics.inputMetrics.bytesRead"
     ],
     "internal_vector_tasks_aggegation_metrics": [
-        "min",
-        "max",
-        "sum",
-        "mean"
+        "min"
     ],
     "internal_vector_sufix_aggegation_metrics": ".agg",
     "internal_vector_output_path": "/tmp/spark-ui-vector",

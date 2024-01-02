@@ -123,7 +123,13 @@ class Audit:
         try:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
-            cursor.execute("UPDATE audit SET load_vector = ? WHERE app_id = ?", (load_vector, app_id,))
+            cursor.execute(
+                "UPDATE audit SET load_vector = ? WHERE app_id = ?",
+                (
+                    load_vector,
+                    app_id,
+                ),
+            )
 
             conn.commit()
         except sqlite3.Error as e:

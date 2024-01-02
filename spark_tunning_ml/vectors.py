@@ -1,14 +1,18 @@
 import glob
 import json
 import os
+from time import time
 
 import pandas as pd
+from pandarallel import pandarallel
 
 from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.embeddings import Embeddings
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.milvus import MilvusWrapper
+
+pandarallel.initialize()
 
 
 class Vectors:
@@ -37,6 +41,8 @@ class Vectors:
         stage_path = config.get("spark_ui_path_stage_info")
         environment_path = config.get("spark_ui_path_environment")
 
+        init_time = time()
+
         result_apps = []
 
         try:
@@ -46,7 +52,7 @@ class Vectors:
 
                 try:
                     result_apps.append(app)
-                    
+
                     json_environment = data.list_files_recursive(
                         os.path.join(data_source_path, app, environment_path), extension="json"
                     )
@@ -141,14 +147,14 @@ class Vectors:
                     df_combined = pd.merge(df_stage, df_tasks_agg, on="stageId", how="inner", validate="one_to_one")
                     df_combined = df_combined.reset_index()
 
-                    df_combined["firstTaskLaunchedTime"] = df_combined["firstTaskLaunchedTime"].apply(
+                    df_combined["firstTaskLaunchedTime"] = df_combined["firstTaskLaunchedTime"].parallel_apply(
                         lambda x: data.convert_date_to_epoch(str(x))
                     )
-                    df_combined["completionTime"] = df_combined["completionTime"].apply(
+                    df_combined["completionTime"] = df_combined["completionTime"].parallel_apply(
                         lambda x: data.convert_date_to_epoch(str(x))
                     )
 
-                    df_combined["totalTimeSec"] = df_combined.apply(
+                    df_combined["totalTimeSec"] = df_combined.parallel_apply(
                         lambda row: abs(row["completionTime"] - row["firstTaskLaunchedTime"]), axis=1
                     )
 
@@ -163,6 +169,11 @@ class Vectors:
 
         except Exception as e:
             logger.error(f"General error in build_vector: {str(e)}")
+
+        end_time = time()
+        total_time = end_time - init_time
+
+        logger.info(f"Time processing for {list_apps}: {total_time}")
 
         return result_apps
 
@@ -194,13 +205,15 @@ class Vectors:
         bulk_num_files = config.get("internal_milvuls_bulk_num_csv")
 
         for i in range(0, len(all_files), bulk_num_files):
-            batch = all_files[i:i + bulk_num_files]
-            
+            batch = all_files[i : i + bulk_num_files]
+
             random_string = data.generate_random_string(4)
-            
+
             num_rows = self.read_and_concatenate_batch(batch, f"{path_files}/{OUTPUT_FILE}_{random_string}.csv")
-            
-            data_vector = embedding_instance.build_entities(f"{path_files}/{OUTPUT_FILE}_{random_string}.csv", list_field_schema)
+
+            data_vector = embedding_instance.build_entities(
+                f"{path_files}/{OUTPUT_FILE}_{random_string}.csv", list_field_schema
+            )
 
             logger.info(f"Inserting {num_rows} rows")
             self.milvus.insert_data(data_vector)
@@ -226,7 +239,6 @@ class Vectors:
         concatenated_data = pd.concat(batch_dataframes, ignore_index=True)
         concatenated_data.to_csv(path_csv, index=False)
         return len(concatenated_data)
-        
 
     def milvus_load_collection(self):
         self.milvus.connect()
