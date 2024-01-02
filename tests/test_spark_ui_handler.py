@@ -6,14 +6,14 @@ from unittest.mock import patch
 import jsonschema
 import pytest
 
-from spark_tunning_ml.spark_ui_wrapper import (
-    SparkUIWrapper,
+from spark_tunning_ml.spark_ui_handler import (
+    SparkUIHandler,
 )
 
 
 @pytest.fixture
 def spark_ui_wrapper():
-    return SparkUIWrapper("https://api.example.com")
+    return SparkUIHandler("https://api.example.com")
 
 
 @patch("requests.get")

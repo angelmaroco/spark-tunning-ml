@@ -5,7 +5,7 @@ import requests
 from spark_tunning_ml.logger import logger
 
 
-class RequestWrapper:
+class RequestHandler:
     """
     A simple request wrapper for making HTTP requests using the requests library.
     """

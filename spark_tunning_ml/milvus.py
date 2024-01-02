@@ -3,7 +3,7 @@ from pymilvus import Collection, CollectionSchema, DataType, FieldSchema, Milvus
 from spark_tunning_ml.logger import logger
 
 
-class MilvusWrapper:
+class MilvusHandler:
     def __init__(self, uri, token):
         self.uri = uri
         self.token = token

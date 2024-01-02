@@ -5,14 +5,14 @@ from unittest.mock import patch
 import pytest
 import requests
 
-from spark_tunning_ml.request_wrapper import (
-    RequestWrapper,
+from spark_tunning_ml.request_handler import (
+    RequestHandler,
 )
 
 
 @pytest.fixture
 def request_wrapper():
-    return RequestWrapper("https://api.example.com")
+    return RequestHandler("https://api.example.com")
 
 
 @patch("requests.get")

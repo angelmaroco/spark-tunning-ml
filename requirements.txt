@@ -16,3 +16,5 @@ python-utils==3.8.1
 plotly==5.18.0
 scikit-fuzzy==0.4.2
 pandarallel==1.6.5
+azure-storage-blob==12.19.0
+azure-identity==1.15.0

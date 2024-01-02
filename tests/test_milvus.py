@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import patch
 from pymilvus import MilvusException
-from spark_tunning_ml.milvus import MilvusWrapper
+from spark_tunning_ml.milvus import MilvusHandler
 
 
 class TestConnect:
     def setup_method(self, method):
-        self.your_instance = MilvusWrapper()
+        self.your_instance = MilvusHandler()
 
     @patch("pymilvus.connections.connect")
     def test_successful_connection(self, mock_connect):

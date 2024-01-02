@@ -32,6 +32,8 @@ class Embeddings:
         logger.info("Starting build embeddings")
         df = pd.read_csv(file_path)
 
+        df.to_csv("/tmp/entities-raw.csv", index=False)
+
         logger.info("Calculating combined field")
         df["text"] = df.parallel_apply(lambda row: self.get_key_value_pairs(row), axis=1)
 
@@ -60,10 +62,6 @@ class Embeddings:
         Return vector_db if successful, otherwise return None
         """
         pass
-
-    def get_embedding(self):
-        self.embedding = HuggingFaceEmbeddings(model_name=self.model_name, model_kwargs={"device": EMBEDDING_DEVICE})
-        return self.embedding
 
     def get_data_vector(self, data):
         emb = self.embedding.embed_documents(data)

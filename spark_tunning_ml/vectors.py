@@ -10,7 +10,7 @@ from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.embeddings import Embeddings
 from spark_tunning_ml.logger import logger
-from spark_tunning_ml.milvus import MilvusWrapper
+from spark_tunning_ml.milvus import MilvusHandler
 
 pandarallel.initialize()
 
@@ -26,7 +26,7 @@ class Vectors:
         Returns:
             None.
         """
-        self.milvus = MilvusWrapper(
+        self.milvus = MilvusHandler(
             uri=config.get("internal_milvus_connection").get("uri"),
             token=os.environ.get("MILVUS_TOKEN"),
         )

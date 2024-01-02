@@ -35,7 +35,8 @@ class Audit:
                     count_files_jobs INTEGER DEFAULT 0,
                     count_files_environment INTEGER DEFAULT 0,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    load_vector INTEGER DEFAULT 0
+                    load_vector INTEGER DEFAULT 0,
+                    upload INTEGER DEFAULT 0
                 )
             """,
             )
@@ -137,6 +138,32 @@ class Audit:
         finally:
             conn.close()
 
+    def update_app_id_upload(self, app_id, upload=0):
+        """
+        Update the `app_id` field in the `audit` table with the given `upload` for a specific `app_id`.
+
+        Parameters
+        - app_id (int): The ID of the app to update.
+        - upload (int): The load vector value to set for the app.
+        """
+
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE audit SET upload = ? WHERE app_id = ?",
+                (
+                    upload,
+                    app_id,
+                ),
+            )
+
+            conn.commit()
+        except sqlite3.Error as e:
+            raise Exception(f"Error updating app_id: {e}")
+        finally:
+            conn.close()
+
     def query_app_id(self, app_id, processed=1):
         """
         Query if a specific app_id exists in the audit database.
@@ -154,6 +181,32 @@ class Audit:
             cursor.execute(
                 "SELECT COUNT(*) FROM audit WHERE app_id = ? and processed = ?",
                 (app_id, processed),
+            )
+            count = cursor.fetchone()[0]
+
+            return count > 0
+        except sqlite3.Error as e:
+            raise Exception(f"Error querying app_id: {e}")
+        finally:
+            conn.close()
+
+    def query_app_id_upload(self, app_id, upload=1):
+        """
+        Query if a specific app_id exists in the audit database.
+
+        Parameters:
+        - app_id (str): Application identifier to be queried.
+
+        Returns:
+        - bool: True if the app_id exists, False otherwise.
+        """
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT COUNT(*) FROM audit WHERE app_id = ? and upload = ?",
+                (app_id, upload),
             )
             count = cursor.fetchone()[0]
 

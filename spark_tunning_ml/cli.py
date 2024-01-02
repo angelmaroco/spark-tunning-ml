@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 
 from spark_tunning_ml.audit import audit
+from spark_tunning_ml.azure import AzureBlobStorageHandler
 from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
-from spark_tunning_ml.spark_ui_wrapper import SparkUIWrapper
+from spark_tunning_ml.spark_ui_handler import SparkUIHandler
 from spark_tunning_ml.vectors import Vectors
 
 
@@ -178,6 +180,57 @@ def process_tasks_stage(sparkui, raw_stages, path_stage_tasks_detail, id, attemp
         return False
 
 
+def uploads_files_to_blob_storage():
+    if config.get("internal_azure_upload_enabled"):
+        container_path = config.get("internal_azure_upload_container_path")
+        container_name = config.get("internal_azure_upload_container_name")
+        max_workers = config.get("internal_azure_upload_max_workers")
+        azure_blob_connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+        force_remove_object_container = config.get("internal_azure_upload_container_force_remove")
+        sources = config.get("spark_ui_path_root")
+
+        if azure_blob_connection_string:
+            logger.info("Starting upload files to Azure Blob Storage")
+            blob_storage_instance = AzureBlobStorageHandler(azure_blob_connection_string, container_name)
+            blob_storage_instance.create_container()
+
+            if force_remove_object_container:
+                logger.info("Removing all files in container")
+                blob_storage_instance.drop_container()
+                logger.warning(
+                    "This operation may take a long time and the status of the operation cannot be known. Aborting."
+                )
+
+            list_files = data.list_files_recursive(sources, "json")
+
+            for file in list_files[:]:
+                app = file.split("/")[3]
+
+                if not audit.query_app_id(app, 1):
+                    audit.add_app_id(app, 1, -2, -2, -2, -2, -2)
+
+                if audit.query_app_id_upload(app, 1):
+                    list_files.remove(file)
+
+            logger.info(f"Total files to upload: {len(list_files)}") if list_files else logger.info(
+                "No files to upload"
+            )
+
+            results = blob_storage_instance.upload_blobs(list_files, max_workers=max_workers)
+
+            for result in results:
+                app = result[0]
+                state = int(result[1] == True)
+
+                audit.update_app_id_upload(app, state)
+
+            logger.info("Upload files to Azure Blob Storage completed")
+        else:
+            logger.error("Azure Blob Storage connection string not found")
+    else:
+        logger.info("Azure Blob Storage upload not enabled")
+
+
 def process_application(id, attemptid, sparkui):
     """
     Process the application with the given ID.
@@ -270,9 +323,9 @@ def parse_arguments():
 
 def initialize_spark_ui(sparkui_api_url):
     """
-    Initialize SparkUIWrapper with the base URL.
+    Initialize SparkUIHandler with the base URL.
     """
-    sparkui = SparkUIWrapper(sparkui_api_url)
+    sparkui = SparkUIHandler(sparkui_api_url)
     return sparkui
 
 
@@ -375,6 +428,8 @@ def main():
     check_spark_version(version)
 
     process_applications(sparkui)
+    uploads_files_to_blob_storage()
+
     process_milvus_data()
     process_milvus_collection()
 

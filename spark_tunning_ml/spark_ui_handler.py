@@ -5,20 +5,20 @@ from typing import Dict, List, Union
 
 from spark_tunning_ml.config import config
 from spark_tunning_ml.logger import logger
-from spark_tunning_ml.request_wrapper import RequestWrapper
+from spark_tunning_ml.request_handler import RequestHandler
 from spark_tunning_ml.schema import SchemaValidator
 
 
-class SparkUIWrapper:
+class SparkUIHandler:
     def __init__(self, base_url):
         """
-        Initialize SparkUIWrapper.
+        Initialize SparkUIHandler.
 
         Args:
             base_url (str): The base URL of the Spark UI.
         """
         self.base_url = base_url
-        self.request_wrapper = RequestWrapper(base_url)
+        self.request_wrapper = RequestHandler(base_url)
 
     def get_applications(self, apps_limit=10000):
         """
