@@ -166,6 +166,19 @@ def process_environment(sparkui, path_environment, id, attemptid):
 
 
 def process_tasks_stage(sparkui, raw_stages, path_stage_tasks_detail, id, attemptid):
+    """
+    Process tasks stage.
+
+    Args:
+        sparkui (SparkUI): The SparkUI instance.
+        raw_stages (List[Stage]): A list of raw stages.
+        path_stage_tasks_detail (str): The path to stage tasks detail.
+        id (str): The application ID.
+        attemptid (str): The attempt ID.
+
+    Returns:
+        bool: True if tasks were processed and saved successfully, False otherwise.
+    """
     data_raw = sparkui.get_tasks_from_stages_normalized(raw_stages)
 
     logger.info(
@@ -180,6 +193,17 @@ def process_tasks_stage(sparkui, raw_stages, path_stage_tasks_detail, id, attemp
         return False
 
 def uploads_files_to_blob_storage():
+    """
+    Uploads files to Azure Blob Storage.
+
+    This function uploads files to Azure Blob Storage if the `internal_azure_upload_enabled` configuration is set to `True`.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
     if not config.get("internal_azure_upload_enabled"):
         logger.info("Azure Blob Storage upload not enabled")
         return
@@ -327,6 +351,15 @@ def initialize_spark_ui(sparkui_api_url):
 
 
 def check_spark_version(version):
+    """
+    Check if the given Spark version is allowed.
+
+    Parameters:
+        version (str): The Spark version to check.
+
+    Returns:
+        None
+    """
     allowed_versions = config.get("internal_spark_ui_compatible_versions")
     if version not in allowed_versions:
         logger.critical(f"Spark API version {version} not allowed.")
@@ -336,6 +369,21 @@ def check_spark_version(version):
 
 
 def process_applications(sparkui):
+    """
+    Process applications in the SparkUI.
+
+    Args:
+        sparkui (SparkUI): The SparkUI object.
+
+    Returns:
+        None
+
+    Description:
+        This function processes applications in the SparkUI. It retrieves the applications from the SparkUI object and applies various filters and limits based on the configuration settings. It then uses ThreadPoolExecutor to process each application concurrently.
+
+        - sparkui (SparkUI): The SparkUI object representing the SparkUI.
+
+    """
     if not config.get("internal_spark_ui_load_applications"):
         logger.info("Omitting applications processing")
         return
@@ -372,6 +420,25 @@ def process_applications(sparkui):
 
 
 def process_milvus_data():
+    """
+    Process Milvus data by generating a data source for milvus vectors and loading it into Milvus.
+
+    This function performs the following steps:
+    1. Checks if the configuration has the flag "internal_milvus_load_data" set to True. If not, it logs a message and returns.
+    2. Logs a message indicating that it is generating a data source for milvus vectors.
+    3. Initializes a Vectors object.
+    4. Sets the data source path to "data/applications".
+    5. Lists all directories recursively under the data source path, up to level 2.
+    6. Loops through the list of applications and performs the following operations:
+       a. Checks if the application ID exists in the audit table. If not, adds a dummy record to the audit table.
+       b. Checks if the application has already been processed by querying the audit table. If so, logs a message and removes the application from the list.
+    7. Checks if the list of applications is empty. If so, generates a random directory path for storing the milvus vectors.
+    8. Sets the concurrency limit for building vectors using the configuration value "internal_spark_ui_max_concurrency_vector".
+    9. Uses a ThreadPoolExecutor to asynchronously build vectors for each application in the list of applications.
+       The build_vector method of the Vectors object is called with the application, data source path, and path vector as arguments.
+    10. Updates the application ID in the audit table with the result of building the vector.
+    11. Loads the milvus vectors from the path vector into Milvus using the milvus_load_data method of the Vectors object.
+    """
     if not config.get("internal_milvus_load_data"):
         logger.info("Omitting milvus load data")
         return
@@ -407,6 +474,19 @@ def process_milvus_data():
 
 
 def process_milvus_collection():
+    """
+    Process the Milvus collection.
+
+    This function checks if the configuration parameter "internal_milvus_load_collection" is set.
+    If it is not set, the function logs a message and returns.
+    If it is set, the function logs a message and proceeds to load the Milvus collection by calling the "milvus_load_collection" method of the "Vectors" class.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     if not config.get("internal_milvus_load_collection"):
         logger.info("Omitting milvus load collection")
         return
@@ -417,6 +497,17 @@ def process_milvus_collection():
 
 
 def main():
+    """
+    Initializes the main function and executes the following steps:
+    1. Parses the command line arguments using `parse_arguments()`.
+    2. Initializes the Spark UI by calling `initialize_spark_ui()` with the `args.sparkui_api_url` parameter.
+    3. Retrieves the Spark version using `sparkui.get_version().get("spark", "unknown")`.
+    4. Checks if the Spark version is valid by calling `check_spark_version()` with the `version` parameter.
+    5. Processes the applications by calling `process_applications(sparkui)`.
+    6. Uploads files to blob storage by calling `uploads_files_to_blob_storage()`.
+    7. Processes Milvus data by calling `process_milvus_data()`.
+    8. Processes Milvus collection by calling `process_milvus_collection()`.
+    """
     args = parse_arguments()
 
     sparkui = initialize_spark_ui(args.sparkui_api_url)
