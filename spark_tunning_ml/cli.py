@@ -11,7 +11,6 @@ from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.spark_ui_handler import SparkUIHandler
-from spark_tunning_ml.vectors import Vectors
 
 
 def process_executors(sparkui, path_executors, id, attemptid):
@@ -419,83 +418,6 @@ def process_applications(sparkui):
         ]
 
 
-def process_milvus_data():
-    """
-    Process Milvus data by generating a data source for milvus vectors and loading it into Milvus.
-
-    This function performs the following steps:
-    1. Checks if the configuration has the flag "internal_milvus_load_data" set to True. If not, it logs a message and returns.
-    2. Logs a message indicating that it is generating a data source for milvus vectors.
-    3. Initializes a Vectors object.
-    4. Sets the data source path to "data/applications".
-    5. Lists all directories recursively under the data source path, up to level 2.
-    6. Loops through the list of applications and performs the following operations:
-       a. Checks if the application ID exists in the audit table. If not, adds a dummy record to the audit table.
-       b. Checks if the application has already been processed by querying the audit table. If so, logs a message and removes the application from the list.
-    7. Checks if the list of applications is empty. If so, generates a random directory path for storing the milvus vectors.
-    8. Sets the concurrency limit for building vectors using the configuration value "internal_spark_ui_max_concurrency_vector".
-    9. Uses a ThreadPoolExecutor to asynchronously build vectors for each application in the list of applications.
-       The build_vector method of the Vectors object is called with the application, data source path, and path vector as arguments.
-    10. Updates the application ID in the audit table with the result of building the vector.
-    11. Loads the milvus vectors from the path vector into Milvus using the milvus_load_data method of the Vectors object.
-    """
-    if not config.get("internal_milvus_load_data"):
-        logger.info("Omitting milvus load data")
-        return
-
-    logger.info("Generating data source for milvus vectors")
-    vectors = Vectors()
-    data_source_path = "data/applications"
-    list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
-
-    for app in list_apps[:]:
-        # Allows reprocessing of applications not available in API.
-        # We add a dummy record to the audit table
-        if not audit.query_app_id(app, 1):
-            audit.add_app_id(app, 1, -1, -1, -1, -1, -1)
-
-        if audit.query_app_id_load_vector(app):
-            logger.info(f"{app} already processed")
-            list_apps.remove(app)
-
-    if data.check_empty_list(list_apps):
-        path_vector = data.generate_random_directory(config.get("internal_vector_output_path"), 1)[0]
-
-        concurrency_limit = config.get("internal_spark_ui_max_concurrency_vector")
-        with ThreadPoolExecutor(concurrency_limit) as vector:
-            futures_vector = [
-                vector.submit(vectors.build_vector, [app], data_source_path, path_vector) for app in list_apps
-            ]
-
-        for app in futures_vector:
-            audit.update_app_id(app.result()[0], 1)
-
-        vectors.milvus_load_data(path_vector)
-
-
-def process_milvus_collection():
-    """
-    Process the Milvus collection.
-
-    This function checks if the configuration parameter "internal_milvus_load_collection" is set.
-    If it is not set, the function logs a message and returns.
-    If it is set, the function logs a message and proceeds to load the Milvus collection by calling the "milvus_load_collection" method of the "Vectors" class.
-
-    Parameters:
-    None
-
-    Returns:
-    None
-    """
-    if not config.get("internal_milvus_load_collection"):
-        logger.info("Omitting milvus load collection")
-        return
-
-    logger.info("Loading milvus collection")
-    vectors = Vectors()
-    vectors.milvus_load_collection()
-
-
 def main():
     """
     Initializes the main function and executes the following steps:
@@ -517,10 +439,6 @@ def main():
 
     process_applications(sparkui)
     uploads_files_to_blob_storage()
-
-    process_milvus_data()
-    process_milvus_collection()
-
 
 if __name__ == "__main__":
     main()
