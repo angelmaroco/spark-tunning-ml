@@ -4,15 +4,12 @@ import os
 from time import time
 
 import pandas as pd
-from pandarallel import pandarallel
 
 from spark_tunning_ml.config import config
 from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.embeddings import Embeddings
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.milvus import MilvusHandler
-
-pandarallel.initialize()
 
 
 class Vectors:
@@ -147,14 +144,14 @@ class Vectors:
                     df_combined = pd.merge(df_stage, df_tasks_agg, on="stageId", how="inner", validate="one_to_one")
                     df_combined = df_combined.reset_index()
 
-                    df_combined["firstTaskLaunchedTime"] = df_combined["firstTaskLaunchedTime"].parallel_apply(
+                    df_combined["firstTaskLaunchedTime"] = df_combined["firstTaskLaunchedTime"].apply(
                         lambda x: data.convert_date_to_epoch(str(x))
                     )
-                    df_combined["completionTime"] = df_combined["completionTime"].parallel_apply(
+                    df_combined["completionTime"] = df_combined["completionTime"].apply(
                         lambda x: data.convert_date_to_epoch(str(x))
                     )
 
-                    df_combined["totalTimeSec"] = df_combined.parallel_apply(
+                    df_combined["totalTimeSec"] = df_combined.apply(
                         lambda row: abs(row["completionTime"] - row["firstTaskLaunchedTime"]), axis=1
                     )
 

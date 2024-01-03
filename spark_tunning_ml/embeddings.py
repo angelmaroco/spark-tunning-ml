@@ -2,11 +2,8 @@ import pandas as pd
 import torch.backends
 import torch.cuda
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from pandarallel import pandarallel
 
 from spark_tunning_ml.logger import logger
-
-pandarallel.initialize()
 
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
@@ -35,7 +32,7 @@ class Embeddings:
         df.to_csv("/tmp/entities-raw.csv", index=False)
 
         logger.info("Calculating combined field")
-        df["text"] = df.parallel_apply(lambda row: self.get_key_value_pairs(row), axis=1)
+        df["text"] = df.apply(lambda row: self.get_key_value_pairs(row), axis=1)
 
         logger.info("Calculating vector field")
         df["vector"] = self.get_data_vector(df["text"].to_list())
