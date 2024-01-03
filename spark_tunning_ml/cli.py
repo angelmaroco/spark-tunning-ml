@@ -234,7 +234,7 @@ def uploads_files_to_blob_storage():
     list_files = [
         file
         for file in list_files
-        if audit.query_app_id(file.split("/")[3], 1) and not audit.query_app_id_upload(file.split("/")[3], 1)
+        if audit.query_app_id(file.split(os.sep)[3], 1) and not audit.query_app_id_upload(file.split(os.sep)[3], 1)
     ]
 
     logger.info(f"Total files to upload: {len(list_files)}") if list_files else logger.info(
@@ -447,6 +447,8 @@ def process_milvus_data():
     vectors = Vectors()
     data_source_path = "data/applications"
     list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
+
+    print("-------------", list_apps)
 
     for app in list_apps[:]:
         # Allows reprocessing of applications not available in API.

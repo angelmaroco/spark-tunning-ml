@@ -377,13 +377,14 @@ class Data:
         - This function does not include the root directory in the result.
         """
         directory_list = []
+        from pathlib import Path
 
         for root, dirs, files in os.walk(directory):
-            current_level = root.count(os.sep)
+            current_level = str(Path(root)).count(os.sep)
+            print(root, current_level)
             if level is not None and current_level > level:
                 continue
-
-            if current_level > 1:  # Exclude the root directory
+            else:
                 directory_list.append(os.path.basename(root))
 
         return directory_list

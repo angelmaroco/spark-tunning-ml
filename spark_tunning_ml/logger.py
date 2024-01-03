@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-
+from pathlib import Path
 
 class Logger:
     def __init__(self, log_file="/tmp/spark-tunning-ml.log", log_level=logging.INFO):
@@ -43,4 +43,4 @@ class Logger:
         self.logger_instance.debug(message)
 
 
-logger = Logger("/tmp/spark-tunning-ml.log", logging.INFO)
+logger = Logger(Path("/tmp/spark-tunning-ml.log"), logging.INFO)
