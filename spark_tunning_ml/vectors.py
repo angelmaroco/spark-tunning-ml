@@ -24,7 +24,7 @@ class Vectors:
             None.
         """
         self.milvus = MilvusHandler(
-            uri=config.get("internal_milvus_connection").get("uri"),
+            uri=os.environ.get("MILVUS_URI"),
             token=os.environ.get("MILVUS_TOKEN"),
         )
 
