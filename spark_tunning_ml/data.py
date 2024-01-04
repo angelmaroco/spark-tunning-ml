@@ -381,7 +381,6 @@ class Data:
 
         for root, dirs, files in os.walk(directory):
             current_level = str(Path(root)).count(os.sep)
-            print(root, current_level)
             if level is not None and current_level > level:
                 continue
             else:

@@ -448,8 +448,6 @@ def process_milvus_data():
     data_source_path = "data/applications"
     list_apps = data.list_directories_recursive(directory=data_source_path, level=2)
 
-    print("-------------", list_apps)
-
     for app in list_apps[:]:
         # Allows reprocessing of applications not available in API.
         # We add a dummy record to the audit table
