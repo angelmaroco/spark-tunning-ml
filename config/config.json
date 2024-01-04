@@ -1,14 +1,20 @@
 {
+    "internal_process_name": "testing001",
     "internal_spark_ui_load_applications": true,
-    "internal_milvus_load_data": false,
-    "internal_milvus_load_collection": false,
+    "internal_milvus_load_data": true,
+    "internal_milvus_load_collection": true,
     "internal_milvus_force_rebuild_schema": false,
     "internal_milvus_force_reprocess": false,
+
+    "internal_azure_container_name": "applications",
     "internal_azure_upload_enabled": true,
+    "internal_azure_upload_compress_enabled": true,
     "internal_azure_upload_container_path": ".",
     "internal_azure_upload_container_force_remove": false,
-    "internal_azure_upload_container_name": "applications",
     "internal_azure_upload_max_workers": 8,
+    "internal_azure_download_enabled": true,
+    "internal_azure_download_max_workers": 8,
+    "internal_azure_download_compress_enabled": true,
 
     "spark_ui_api_endpoint_version": "/version",
     "spark_ui_api_endpoint_applications": "/applications?status=completed&limit={apps_limit}",
@@ -136,9 +142,6 @@
     ],
     "internal_vector_sufix_aggegation_metrics": ".agg",
     "internal_vector_output_path": "/tmp/spark-ui-vector",
-    "internal_milvus_connection": {
-        "uri": "https://in03-2bac68083184640.api.gcp-us-west1.zillizcloud.com"
-    },
     "internal_milvuls_bulk_num_csv": 200,
     "internal_milvus_collection_spark_metrics": "SparkMetrics",
     "internal_milvus_fields_spark_metrics": {

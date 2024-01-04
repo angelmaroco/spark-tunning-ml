@@ -55,14 +55,12 @@ class AzureBlobStorageHandler:
             logger.error(f"Error downloading blob {blob_name}: {ex}")
             return False
 
-    def download_blobs_in_folder(self, blob_prefix, local_folder_path, file_filter=None, max_workers=5):
+    def download_blobs_in_folder(self, blob_prefix, file_filter=None, max_workers=5):
         """
         Downloads blobs from a specified folder in the blob storage to a local folder.
 
         :param blob_prefix: The prefix of the blob names in the storage to filter the blobs to be downloaded.
         :type blob_prefix: str
-        :param local_folder_path: The path of the local folder where the blobs will be downloaded.
-        :type local_folder_path: str
         :param file_filter: Optional. The file extension filter to only download files with a specific extension.
         :type file_filter: str, optional
         :param max_workers: Optional. The maximum number of worker threads to use for concurrent downloads. Default is 5.
@@ -79,14 +77,10 @@ class AzureBlobStorageHandler:
                 for blob in blobs:
                     blob_name = blob.name
                     if file_filter is None or blob_name.endswith(file_filter):
-                        destination_file_path = os.path.join(local_folder_path, blob_name)
+                        destination_file_path = blob_name
+                        os.makedirs(os.path.dirname(destination_file_path), exist_ok=True)
                         future = executor.submit(self.download_blob, blob_name, destination_file_path)
                         futures.append(future)
-
-                # Wait for all tasks to complete
-                concurrent.futures.wait(futures)
-                results = [future.result() for future in futures]
-                return all(results)
         except AzureError as ex:
             logger.error(f"Error downloading blobs in folder {blob_prefix}: {ex}")
             return False
@@ -142,12 +136,13 @@ class AzureBlobStorageHandler:
 
                 # Wait for all tasks to complete
                 for local_file_path, future in futures:
+                    app = local_file_path.split("/")[3].split(".")[0]
                     try:
                         result = future.result()
-                        results.append((local_file_path.split("/")[3], result))
+                        results.append((app, result))
                     except Exception as e:
                         logger.error(f"Error uploading file {local_file_path}: {e}")
-                        results.append((local_file_path.split("/")[3], False))
+                        results.append((app, False))
 
             return results
         except AzureError as ex:

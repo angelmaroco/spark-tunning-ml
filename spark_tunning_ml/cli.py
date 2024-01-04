@@ -192,65 +192,6 @@ def process_tasks_stage(sparkui, raw_stages, path_stage_tasks_detail, id, attemp
         logger.info("No tasks found.")
         return False
 
-def uploads_files_to_blob_storage():
-    """
-    Uploads files to Azure Blob Storage.
-
-    This function uploads files to Azure Blob Storage if the `internal_azure_upload_enabled` configuration is set to `True`.
-
-    Parameters:
-        None
-
-    Returns:
-        None
-    """
-    if not config.get("internal_azure_upload_enabled"):
-        logger.info("Azure Blob Storage upload not enabled")
-        return
-
-    container_name = config.get("internal_azure_upload_container_name")
-    max_workers = config.get("internal_azure_upload_max_workers")
-    azure_blob_connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
-    force_remove_object_container = config.get("internal_azure_upload_container_force_remove")
-    sources = config.get("spark_ui_path_root")
-
-    if not azure_blob_connection_string:
-        logger.error("Azure Blob Storage connection string not found")
-        return
-
-    logger.info("Starting upload files to Azure Blob Storage")
-    blob_storage_instance = AzureBlobStorageHandler(azure_blob_connection_string, container_name)
-    blob_storage_instance.create_container()
-
-    if force_remove_object_container:
-        logger.info("Removing all files in container")
-        blob_storage_instance.drop_container()
-        logger.warning(
-            "This operation may take a long time and the status of the operation cannot be known. Aborting."
-        )
-
-    list_files = data.list_files_recursive(sources, "json")
-
-    list_files = [
-        file
-        for file in list_files
-        if audit.query_app_id(file.split(os.sep)[3], 1) and not audit.query_app_id_upload(file.split(os.sep)[3], 1)
-    ]
-
-    logger.info(f"Total files to upload: {len(list_files)}") if list_files else logger.info(
-        "No files to upload"
-    )
-
-    results = blob_storage_instance.upload_blobs(list_files, max_workers=max_workers)
-
-    for result in results:
-        app = result[0]
-        state = int(result[1] == True)
-
-        audit.update_app_id_upload(app, state)
-
-    logger.info("Upload files to Azure Blob Storage completed")
-
 
 def process_application(id, attemptid, sparkui):
     """
@@ -496,6 +437,114 @@ def process_milvus_collection():
     vectors.milvus_load_collection()
 
 
+def uploads_files_to_blob_storage():
+    """
+    Uploads files to Azure Blob Storage.
+
+    This function uploads files to Azure Blob Storage if the `internal_azure_upload_enabled` configuration is set to `True`.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
+    if not config.get("internal_azure_upload_enabled"):
+        logger.info("Azure Blob Storage upload not enabled")
+        return
+
+    process_name = config.get("internal_process_name")
+    container_name = f"{process_name}-{config.get('internal_azure_container_name')}"
+    max_workers = config.get("internal_azure_upload_max_workers")
+    azure_blob_connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+    force_remove_object_container = config.get("internal_azure_upload_container_force_remove")
+    upload_compress_enabled = config.get("internal_azure_upload_compress_enabled")
+    sources = config.get("spark_ui_path_root")
+
+    if not azure_blob_connection_string:
+        logger.error("Azure Blob Storage connection string not found")
+        return
+
+    logger.info("Starting upload files to Azure Blob Storage")
+    blob_storage_instance = AzureBlobStorageHandler(azure_blob_connection_string, container_name)
+    blob_storage_instance.create_container()
+
+    if force_remove_object_container:
+        logger.info("Removing all files in container")
+        blob_storage_instance.drop_container()
+        logger.warning("This operation may take a long time and the status of the operation cannot be known. Aborting.")
+
+    list_files_upload = []
+
+    if upload_compress_enabled:
+        list_files_upload = compress_files(sources)
+    else:
+        list_files_upload = data.list_files_recursive(sources, "json")
+
+    for file in list_files_upload.copy():
+        app = file.split(os.sep)[3].split(".")[0]  # Example 'application_1692342312988_81566'
+
+        if not audit.query_app_id(app, 1):
+            audit.add_app_id(app, 1, -2, -2, -2, -2, -2)
+
+        if audit.query_app_id_upload(app, 1):
+            list_files_upload.remove(file)
+
+    logger.info(f"Total files to upload: {len(list_files_upload)}") if list_files_upload else logger.info(
+        "No files to upload"
+    )
+
+    results = blob_storage_instance.upload_blobs(list_files_upload, max_workers=max_workers)
+
+    [audit.update_app_id_upload(app, int(state is True)) for app, state in results]
+
+    if upload_compress_enabled:
+        [data.delete_file(file) for file in list_files_upload]
+
+    logger.info("Upload files to Azure Blob Storage completed")
+
+
+def download_files_from_blob_storage():
+    if not config.get("internal_azure_download_enabled"):
+        logger.info("Azure Blob Storage download not enabled")
+        return
+
+    process_name = config.get("internal_process_name")
+    container_name = f"{process_name}-{config.get('internal_azure_container_name')}"
+    max_workers = config.get("internal_azure_download_max_workers")
+    azure_blob_connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+
+    target = f"{config.get('spark_ui_path_root')}"
+
+    if not azure_blob_connection_string:
+        logger.error("Azure Blob Storage connection string not found")
+        return
+
+    logger.info("Starting download files from Azure Blob Storage")
+    blob_storage_instance = AzureBlobStorageHandler(azure_blob_connection_string, container_name)
+
+    file_filter = "zip" if config.get("internal_azure_download_compress_enabled") else ""
+
+    blob_storage_instance.download_blobs_in_folder("", target, file_filter=file_filter, max_workers=max_workers)
+
+    logger.info("Download files to Azure Blob Storage completed")
+
+    data.decompress_and_delete_zip_parallel(target) if config.get("internal_azure_download_compress_enabled") else None
+
+
+def compress_files(sources):
+    logger.info("Compressing files")
+    list_apps = data.list_directories_recursive(directory=sources, level=2)
+    list_apps_zip = [
+        (os.path.join(sources, app), os.path.join(sources, app))
+        for app in list_apps
+        if not audit.query_app_id_upload(app, 1)
+    ]
+    data.compress_folders_parallel(list_apps_zip)
+    logger.info(f"Found {len(list_apps_zip)} files to compress")
+    return data.list_files_recursive(sources, "zip")
+
+
 def main():
     """
     Initializes the main function and executes the following steps:
@@ -518,6 +567,7 @@ def main():
     process_applications(sparkui)
     uploads_files_to_blob_storage()
 
+    download_files_from_blob_storage()
     process_milvus_data()
     process_milvus_collection()
 

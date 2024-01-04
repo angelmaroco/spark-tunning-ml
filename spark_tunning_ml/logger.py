@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+
 class Logger:
     def __init__(self, log_file="/tmp/spark-tunning-ml.log", log_level=logging.INFO):
         self.logger_instance = logging.getLogger(__name__)

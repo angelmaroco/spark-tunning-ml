@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import concurrent.futures
 import glob
 import json
 import os
@@ -505,3 +506,87 @@ class Data:
         characters = string.ascii_letters + string.digits
         random_string = "".join(random.choice(characters) for _ in range(length))
         return random_string
+
+    @staticmethod
+    def compress_folders_parallel(folder_list):
+        """
+        Compresses multiple folders in parallel.
+
+        Parameters:
+        folder_list (list of tuples): Each tuple contains two strings,
+                                    the source folder path and the output filename.
+
+        Returns:
+        list of tuples: Each tuple contains the source folder path and either
+                        the path of the created zip file or an error message.
+        """
+
+        def compress_folder(source_folder, output_filename):
+            """
+            Compresses the contents of a specified folder into a zip file.
+
+            Parameters:
+            source_folder (str): The path of the folder to be compressed.
+            output_filename (str): The path (including filename) for the output zip file.
+
+            Returns:
+            str: The path of the created zip file.
+            """
+            shutil.make_archive(output_filename, "zip", source_folder)
+            return output_filename + ".zip"
+
+        results = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_to_folder = {
+                executor.submit(compress_folder, folder[0], folder[1]): folder for folder in folder_list
+            }
+            for future in concurrent.futures.as_completed(future_to_folder):
+                source_folder, output_filename = future_to_folder[future]
+                try:
+                    zip_path = future.result()
+                    results.append((source_folder, zip_path))
+                except Exception as exc:
+                    results.append((source_folder, f"Error: {exc}"))
+
+        return results
+
+    @staticmethod
+    def decompress_and_delete_zip_parallel(directory):
+        """
+        Decompresses all .zip files located in the specified directory into a folder named after the zip file,
+        in parallel, and deletes the original .zip files.
+
+        This function scans the given directory for all files with a .zip extension. Each found zip file is decompressed
+        in parallel into a newly created folder within the same directory. The name of the folder is the same as the zip
+        file (without the .zip extension). After successful decompression, the original .zip file is deleted.
+
+        Parameters:
+        directory (str): The path to the directory containing the .zip files to be decompressed.
+
+        Returns:
+        None
+        """
+        import os
+        import zipfile
+        from concurrent.futures import ThreadPoolExecutor
+
+        def decompress_zip(file_path):
+            """Function to decompress a single zip file into a named folder and delete the zip file afterwards"""
+            folder_name = os.path.splitext(os.path.basename(file_path))[0]
+            target_folder = os.path.join(directory, folder_name)
+            logger.info(f"Unzipping file {file_path} to {target_folder}")
+
+            # Create the target folder if it doesn't exist
+            os.makedirs(target_folder, exist_ok=True)
+
+            with zipfile.ZipFile(file_path, "r") as zip_ref:
+                zip_ref.extractall(target_folder)
+
+            os.remove(file_path)
+
+        # Create a list to hold the paths of all zip files
+        zip_files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith(".zip")]
+
+        # Use ThreadPoolExecutor to decompress files in parallel
+        with ThreadPoolExecutor() as executor:
+            executor.map(decompress_zip, zip_files)
