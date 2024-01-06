@@ -12,6 +12,7 @@ from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.spark_ui_handler import SparkUIHandler
 from spark_tunning_ml.vectors import Vectors
+from pathlib import Path
 
 
 def process_executors(sparkui, path_executors, id, attemptid):
@@ -482,7 +483,7 @@ def uploads_files_to_blob_storage():
         list_files_upload = data.list_files_recursive(sources, "json")
 
     for file in list_files_upload.copy():
-        app = file.split(os.sep)[3].split(".")[0]  # Example 'application_1692342312988_81566'
+        app = str(Path(file)).split(os.sep)[2].split(".")[0] # Example 'application_1692342312988_81566'
 
         if not audit.query_app_id(app, 1):
             audit.add_app_id(app, 1, -2, -2, -2, -2, -2)
@@ -525,7 +526,7 @@ def download_files_from_blob_storage():
 
     file_filter = "zip" if config.get("internal_azure_download_compress_enabled") else ""
 
-    blob_storage_instance.download_blobs_in_folder("", target, file_filter=file_filter, max_workers=max_workers)
+    blob_storage_instance.download_blobs_in_folder("", file_filter=file_filter, max_workers=max_workers)
 
     logger.info("Download files to Azure Blob Storage completed")
 
