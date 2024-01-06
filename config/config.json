@@ -1,5 +1,5 @@
 {
-    "internal_process_name": "testing001",
+    "internal_process_name": "test-dev",
     "internal_spark_ui_load_applications": true,
     "internal_milvus_load_data": true,
     "internal_milvus_load_collection": true,
@@ -12,7 +12,7 @@
     "internal_azure_upload_container_path": ".",
     "internal_azure_upload_container_force_remove": false,
     "internal_azure_upload_max_workers": 8,
-    "internal_azure_download_enabled": true,
+    "internal_azure_download_enabled": false,
     "internal_azure_download_max_workers": 8,
     "internal_azure_download_compress_enabled": true,
 
@@ -74,8 +74,8 @@
         "3.1.2"
     ],
     "internal_spark_ui_max_concurrency_api": 100,
-    "internal_spark_ui_max_concurrency_vector": 2,
-    "internal_spark_ui_apps_limit": 5,
+    "internal_spark_ui_max_concurrency_vector": 20,
+    "internal_spark_ui_apps_limit": 2,
     "internal_spark_ui_debug_mode_enabled": false,
     "internal_spark_ui_debug_mode_max_apps": 1,
     "internal_spark_ui_debug_mode_test_concurrency": false,
@@ -87,30 +87,17 @@
         "firstTaskLaunchedTime",
         "completionTime",
         "numTasks",
-        "executorDeserializeTime",
-        "executorDeserializeCpuTime",
         "executorRunTime",
         "executorCpuTime",
-        "resultSize",
-        "jvmGcTime",
-        "resultSerializationTime",
         "memoryBytesSpilled",
         "diskBytesSpilled",
-        "peakExecutionMemory",
         "inputBytes",
         "inputRecords",
         "outputBytes",
         "outputRecords",
-        "shuffleRemoteBlocksFetched",
-        "shuffleLocalBlocksFetched",
-        "shuffleFetchWaitTime",
-        "shuffleRemoteBytesRead",
-        "shuffleRemoteBytesReadToDisk",
-        "shuffleLocalBytesRead",
         "shuffleReadBytes",
         "shuffleReadRecords",
         "shuffleWriteBytes",
-        "shuffleWriteTime",
         "shuffleWriteRecords",
         "name"
     ],
@@ -138,12 +125,16 @@
         "taskMetrics.inputMetrics.bytesRead"
     ],
     "internal_vector_tasks_aggegation_metrics": [
-        "min"
+        "min",
+        "max",
+        "sum",
+        "std",
+        "mean"
     ],
     "internal_vector_sufix_aggegation_metrics": ".agg",
     "internal_vector_output_path": "/tmp/spark-ui-vector",
     "internal_milvuls_bulk_num_csv": 200,
-    "internal_milvus_collection_spark_metrics": "SparkMetrics",
+    "internal_milvus_collection_spark_metrics": "spark-metrics",
     "internal_milvus_fields_spark_metrics": {
         "pk": {
             "type": "INT64",
@@ -180,7 +171,7 @@
             "type": "INT16",
             "is_primary": false
         },
-        "resultSize": {
+        "taskMetrics_resultSize_min_agg": {
             "type": "INT64",
             "is_primary": false
         },

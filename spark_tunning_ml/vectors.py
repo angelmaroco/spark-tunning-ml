@@ -38,6 +38,9 @@ class Vectors:
         stage_path = config.get("spark_ui_path_stage_info")
         environment_path = config.get("spark_ui_path_environment")
 
+        PROPERTY_DEFAULT_VALUE_STRING = "N/A"
+        PROPERTY_DEFAULT_VALUE_INT = 0
+
         init_time = time()
 
         result_apps = []
@@ -69,23 +72,44 @@ class Vectors:
                     spark_properties = json_environment
                     system_properties = json_environment
 
-                    spark_app_id = self.check_property(spark_properties, "spark.app.id", default_value="N/A")
-                    spark_app_name = self.check_property(spark_properties, "spark.app.name", default_value="N/A")
-
+                    spark_app_id = self.check_property(spark_properties, "spark.app.id", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_app_name = self.check_property(spark_properties, "spark.app.name", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_executor_instances = self.check_property(spark_properties, "spark.executor.instances", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_tags = self.check_property(spark_properties, "spark.yarn.tags", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_queue = self.check_property(spark_properties, "spark.yarn.queue", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_scheduler_minregisteredresourcesratio = self.check_property(spark_properties, "spark.scheduler.minRegisteredResourcesRatio", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_memory_offheap_size = self.check_property(spark_properties, "spark.memory.offHeap.size", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_executor_cores = self.check_property(spark_properties, "spark.executor.cores", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_executor_memory = self.check_property(spark_properties, "spark.executor.memory", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_driver_cores = self.check_property(spark_properties, "spark.driver.cores", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_driver_memory = self.check_property(spark_properties, "spark.driver.memory", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_driver_maxresultsize = self.check_property(spark_properties, "spark.driver.maxResultSize", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_default_parallelism = self.check_property(spark_properties, "spark.default.parallelism", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_sql_shuffle_partitions = self.check_property(spark_properties, "spark.sql.shuffle.partitions", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_shuffle_file_buffer = self.check_property(spark_properties, "spark.shuffle.file.buffer", default_value=PROPERTY_DEFAULT_VALUE_INT)
+                    spark_reducer_maxsizeinflight = self.check_property(spark_properties, "spark.reducer.maxsizeinflight", default_value=PROPERTY_DEFAULT_VALUE_STRING)
+                    spark_sql_autobroadcastjoin = self.check_property(spark_properties, "spark.sql.autoBroadcastJoinThreshold", default_value=PROPERTY_DEFAULT_VALUE_INT)
+    
                     spark_dynamic_allocation = int(
                         self.check_property(spark_properties, "spark.dynamicAllocation.enabled", default_value="0")
                         == "true"
                     )
+                    spark_dynamic_allocation_initial = self.check_property(
+                        spark_properties, "spark.dynamicAllocation.initialExecutors", default_value=PROPERTY_DEFAULT_VALUE_INT
+                    )
                     spark_dynamic_allocation_min = self.check_property(
-                        spark_properties, "spark.dynamicAllocation.minExecutors", default_value=0
+                        spark_properties, "spark.dynamicAllocation.minExecutors", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
                     spark_dynamic_allocation_max = self.check_property(
-                        spark_properties, "spark.dynamicAllocation.maxExecutors", default_value=0
+                        spark_properties, "spark.dynamicAllocation.maxExecutors", default_value=PROPERTY_DEFAULT_VALUE_INT
+                    )
+                    spark_dynamic_allocation_executors_idle_timeout = self.check_property(
+                        spark_properties, "spark.dynamicAllocation.executorIdleTimeout", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
 
-                    spark_user_name = self.check_property(system_properties, "user.name", default_value="N/A")
+                    spark_user_name = self.check_property(system_properties, "user.name", default_value=PROPERTY_DEFAULT_VALUE_STRING)
 
-                    logger.info(f"Processing {spark_app_id} - {spark_app_name}")
+                    logger.info(f"Processing {spark_app_id} - {spark_app_name} - {spark_tags}")
 
                 except Exception as e:
                     logger.error(f"Error processing environment file {json_environment}: {str(e)}")
@@ -118,9 +142,27 @@ class Vectors:
                         }
                         data_stage["sparkAppId"] = [spark_app_id]
                         data_stage["sparkAppName"] = [spark_app_name]
+                        data_stage["sparkTags"] = [spark_tags]
+                        data_stage["sparkQueue"] = [spark_queue]
+                        data_stage["sparkSchedulerMinRegisteredResourcesRatio"] = [spark_scheduler_minregisteredresourcesratio]
+                        data_stage["sparkMemoryOffHeapSize"] = [spark_memory_offheap_size]
+                        data_stage["sparkExecutorInstances"] = [spark_executor_instances]
+                        data_stage["sparkExecutorCores"] = [spark_executor_cores]
+                        data_stage["sparkExecutorMemory"] = [spark_executor_memory]
+                        data_stage["sparkDriverCores"] = [spark_driver_cores]
+                        data_stage["sparkDriverMemory"] = [spark_driver_memory]
+                        data_stage["sparkDriverMaxResultSize"] = [spark_driver_maxresultsize]
+                        data_stage["sparkDefaultParallelism"] = [spark_default_parallelism]
+                        data_stage["sparkSqlShufflePartitions"] = [spark_sql_shuffle_partitions]
+                        data_stage["sparkShuffleFileBuffer"] = [spark_shuffle_file_buffer]
                         data_stage["dynamicAllocationEnabled"] = [spark_dynamic_allocation]
+                        data_stage["dynamicAllocationInitialExecutors"] = [spark_dynamic_allocation_initial]
                         data_stage["dynamicAllocationMinExecutors"] = [spark_dynamic_allocation_min]
                         data_stage["dynamicAllocationMaxExecutors"] = [spark_dynamic_allocation_max]
+                        data_stage["dynamicAllocationExecutorsIdleTimeout"] = [spark_dynamic_allocation_executors_idle_timeout]
+                        data_stage["reducerMaxSizeInFlight"] = [spark_reducer_maxsizeinflight]
+                        data_stage["sqlAutoBroadcastJoinThreshold"] = [spark_sql_autobroadcastjoin]
+                        
                         data_stage["userName"] = [spark_user_name]
                         data_stage["numExecutorsAssocStage"] = [len(json_stage_content[0].get("executorSummary", {}))]
 
@@ -139,7 +181,7 @@ class Vectors:
                         for key in config.get("internal_vector_tasks_agg_columns")
                     }
                     df_tasks_agg = df_tasks.groupby(["stageId"]).agg(agg_dict)
-                    df_tasks_agg.columns = [f"{col[0]}.{col[1]}Agg" for col in df_tasks_agg.columns]
+                    df_tasks_agg.columns = [f"{col[0]}_{col[1]}_agg" for col in df_tasks_agg.columns]
 
                     df_combined = pd.merge(df_stage, df_tasks_agg, on="stageId", how="inner", validate="one_to_one")
                     df_combined = df_combined.reset_index()
@@ -154,6 +196,12 @@ class Vectors:
                     df_combined["totalTimeSec"] = df_combined.apply(
                         lambda row: abs(row["completionTime"] - row["firstTaskLaunchedTime"]), axis=1
                     )
+
+                    df_combined.fillna(0, inplace=True)
+
+                    df_combined = df_combined.rename(columns=lambda x: x.replace('.', '_'))
+
+                    df_combined = df_combined.map(lambda x: round(x,2) if isinstance(x, float) else x)
 
                     path_vector_path_app = os.path.join(path_vector, f"{app}.csv")
                     df_combined.to_csv(path_vector_path_app, index=False)
@@ -175,7 +223,8 @@ class Vectors:
         return result_apps
 
     def milvus_load_data(self, path_files):
-        spark_collection = config.get("internal_milvus_collection_spark_metrics")
+        process_name = config.get("internal_process_name")
+        spark_collection = data.convert_to_camel_case(f"{config.get('internal_milvus_collection_spark_metrics')}-{process_name}")
         spark_fields = config.get("internal_milvus_fields_spark_metrics")
         milvus_force_rebuild_schema = config.get("internal_milvus_force_rebuild_schema")
 
@@ -240,7 +289,8 @@ class Vectors:
     def milvus_load_collection(self):
         self.milvus.connect()
 
-        spark_collection = config.get("internal_milvus_collection_spark_metrics")
+        process_name = config.get("internal_process_name")
+        spark_collection = data.convert_to_camel_case(f"{config.get('internal_milvus_collection_spark_metrics')}-{process_name}")
 
         self.milvus.get_collection(spark_collection)
 

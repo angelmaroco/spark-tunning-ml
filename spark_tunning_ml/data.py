@@ -8,6 +8,7 @@ import random
 import shutil
 import string
 from datetime import datetime, timezone
+import re
 
 import pandas as pd
 
@@ -590,3 +591,9 @@ class Data:
         # Use ThreadPoolExecutor to decompress files in parallel
         with ThreadPoolExecutor() as executor:
             executor.map(decompress_zip, zip_files)
+
+    @staticmethod
+    def convert_to_camel_case(chars):
+        word_regex_pattern = re.compile("[^A-Za-z]+")
+        words = word_regex_pattern.split(chars)
+        return "".join(w.lower() if i == 0 else w.title() for i, w in enumerate(words))
