@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from spark_tunning_ml.audit import audit
 from spark_tunning_ml.azure import AzureBlobStorageHandler
@@ -12,7 +13,6 @@ from spark_tunning_ml.data import Data as data
 from spark_tunning_ml.logger import logger
 from spark_tunning_ml.spark_ui_handler import SparkUIHandler
 from spark_tunning_ml.vectors import Vectors
-from pathlib import Path
 
 
 def process_executors(sparkui, path_executors, id, attemptid):
@@ -483,7 +483,7 @@ def uploads_files_to_blob_storage():
         list_files_upload = data.list_files_recursive(sources, "json")
 
     for file in list_files_upload.copy():
-        app = str(Path(file)).split(os.sep)[2].split(".")[0] # Example 'application_1692342312988_81566'
+        app = str(Path(file)).split(os.sep)[2].split(".")[0]  # Example 'application_1692342312988_81566'
 
         if not audit.query_app_id(app, 1):
             audit.add_app_id(app, 1, -2, -2, -2, -2, -2)

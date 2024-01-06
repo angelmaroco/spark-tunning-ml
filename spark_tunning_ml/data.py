@@ -5,10 +5,10 @@ import glob
 import json
 import os
 import random
+import re
 import shutil
 import string
 from datetime import datetime, timezone
-import re
 
 import pandas as pd
 

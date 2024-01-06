@@ -1,12 +1,12 @@
 import concurrent.futures
 import os
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.storage.blob import BlobServiceClient
 
 from spark_tunning_ml.logger import logger
-from pathlib import Path
 
 
 class AzureBlobStorageHandler:
@@ -137,7 +137,7 @@ class AzureBlobStorageHandler:
 
                 # Wait for all tasks to complete
                 for local_file_path, future in futures:
-                    app = str(Path(local_file_path)).split("/")[2].split(".")[0]
+                    app = str(Path(local_file_path)).split(os.sep)[2].split(".")[0]
                     try:
                         result = future.result()
                         results.append((app, result))
