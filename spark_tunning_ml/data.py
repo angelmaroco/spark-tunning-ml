@@ -597,3 +597,34 @@ class Data:
         word_regex_pattern = re.compile("[^A-Za-z]+")
         words = word_regex_pattern.split(chars)
         return "".join(w.lower() if i == 0 else w.title() for i, w in enumerate(words))
+    
+    @staticmethod
+    def convert_to_bytes(size_str):
+        # Define conversion factors
+        conversion_factors = {
+            'b': 1,
+            'k': 1024,
+            'kb': 1024,
+            'm': 1024 ** 2,
+            'mb': 1024 ** 2,
+            'g': 1024 ** 3,
+            'gb': 1024 ** 3,
+            't': 1024 ** 4,
+            'tb': 1024 ** 4,
+            'p': 1024 ** 5,
+            'pb': 1024 ** 5
+        }
+
+        # Extract the numeric part and the unit
+        numeric_part = ''.join(filter(str.isdigit, size_str))
+        unit = ''.join(filter(str.isalpha, size_str)).lower()
+
+        # Convert the numeric part to an integer
+        numeric_value = int(numeric_part)
+
+        # Calculate the bytes
+        if unit in conversion_factors:
+            return numeric_value * conversion_factors[unit]
+        else:
+            raise ValueError("Invalid unit. Supported units are b, kb, mb, gb, tb, k, m, g, t, p.")
+

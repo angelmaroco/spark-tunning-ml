@@ -40,6 +40,7 @@ class Vectors:
 
         PROPERTY_DEFAULT_VALUE_STRING = "N/A"
         PROPERTY_DEFAULT_VALUE_INT = 0
+        PROPERTY_DEFAULT_STRING_BYTES = "0b"
 
         init_time = time()
 
@@ -84,44 +85,47 @@ class Vectors:
                     spark_tags = self.check_property(
                         spark_properties, "spark.yarn.tags", default_value=PROPERTY_DEFAULT_VALUE_STRING
                     )
+                    config_file = self.check_property(
+                        spark_properties, "config.file", default_value=PROPERTY_DEFAULT_VALUE_STRING
+                    )
                     spark_queue = self.check_property(
                         spark_properties, "spark.yarn.queue", default_value=PROPERTY_DEFAULT_VALUE_STRING
                     )
                     spark_scheduler_minregisteredresourcesratio = self.check_property(
                         spark_properties,
                         "spark.scheduler.minRegisteredResourcesRatio",
-                        default_value=PROPERTY_DEFAULT_VALUE_STRING,
+                        default_value=PROPERTY_DEFAULT_VALUE_INT,
                     )
-                    spark_memory_offheap_size = self.check_property(
-                        spark_properties, "spark.memory.offHeap.size", default_value=PROPERTY_DEFAULT_VALUE_STRING
-                    )
+                    spark_memory_offheap_size = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.memory.offHeap.size", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
                     spark_executor_cores = self.check_property(
                         spark_properties, "spark.executor.cores", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
-                    spark_executor_memory = self.check_property(
-                        spark_properties, "spark.executor.memory", default_value=PROPERTY_DEFAULT_VALUE_STRING
-                    )
+                    spark_executor_memory = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.executor.memory", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
                     spark_driver_cores = self.check_property(
                         spark_properties, "spark.driver.cores", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
-                    spark_driver_memory = self.check_property(
-                        spark_properties, "spark.driver.memory", default_value=PROPERTY_DEFAULT_VALUE_STRING
-                    )
-                    spark_driver_maxresultsize = self.check_property(
-                        spark_properties, "spark.driver.maxResultSize", default_value=PROPERTY_DEFAULT_VALUE_STRING
-                    )
+                    spark_driver_memory = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.driver.memory", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
+                    spark_driver_maxresultsize = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.driver.maxResultSize", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
                     spark_default_parallelism = self.check_property(
                         spark_properties, "spark.default.parallelism", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
                     spark_sql_shuffle_partitions = self.check_property(
                         spark_properties, "spark.sql.shuffle.partitions", default_value=PROPERTY_DEFAULT_VALUE_INT
                     )
-                    spark_shuffle_file_buffer = self.check_property(
-                        spark_properties, "spark.shuffle.file.buffer", default_value=PROPERTY_DEFAULT_VALUE_INT
-                    )
-                    spark_reducer_maxsizeinflight = self.check_property(
-                        spark_properties, "spark.reducer.maxsizeinflight", default_value=PROPERTY_DEFAULT_VALUE_STRING
-                    )
+                    spark_shuffle_file_buffer = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.shuffle.file.buffer", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
+                    spark_reducer_maxsizeinflight = data.convert_to_bytes(self.check_property(
+                        spark_properties, "spark.reducer.maxsizeinflight", default_value=PROPERTY_DEFAULT_STRING_BYTES
+                    ))
                     spark_sql_autobroadcastjoin = self.check_property(
                         spark_properties,
                         "spark.sql.autoBroadcastJoinThreshold",
@@ -191,6 +195,7 @@ class Vectors:
                         data_stage["sparkAppId"] = [spark_app_id]
                         data_stage["sparkAppName"] = [spark_app_name]
                         data_stage["sparkTags"] = [spark_tags]
+                        data_stage["configFile"] = [config_file]
                         data_stage["sparkQueue"] = [spark_queue]
                         data_stage["sparkSchedulerMinRegisteredResourcesRatio"] = [
                             spark_scheduler_minregisteredresourcesratio
